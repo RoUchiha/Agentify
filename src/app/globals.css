@@ -627,6 +627,83 @@ h3 {
   cursor: pointer;
 }
 
+.artifact-delivery {
+  margin-top: 1rem;
+}
+
+.delivery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.build-timeline,
+.verification-report,
+.artifact-files {
+  padding: 1rem;
+  border: 1px solid #31493f;
+  border-radius: 0.9rem;
+  background: #0a1712;
+}
+
+.build-timeline ol,
+.verification-report ul,
+.artifact-files ul {
+  display: grid;
+  gap: 0.7rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.build-timeline li {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.build-timeline li > span {
+  color: #75efb5;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.build-timeline li strong {
+  text-transform: uppercase;
+}
+
+.build-timeline li p,
+.verification-report li p {
+  margin: 0.2rem 0 0;
+  color: #94aa9f;
+  font-size: 0.76rem;
+}
+
+.verification-report li,
+.artifact-files li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.7rem;
+  align-items: center;
+}
+
+.verification-report li p {
+  grid-column: 1 / -1;
+}
+
+.gate-status {
+  color: #75efb5;
+  text-transform: uppercase;
+}
+
+.gate-status.failed {
+  color: #ff997d;
+}
+
+.artifact-files > .panel-heading code,
+.artifact-files li span {
+  color: #789087;
+  font-size: 0.68rem;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -651,7 +728,8 @@ h3 {
 
   .builder-grid,
   .advanced-grid,
-  .playground-grid {
+  .playground-grid,
+  .delivery-grid {
     grid-template-columns: 1fr;
   }
 

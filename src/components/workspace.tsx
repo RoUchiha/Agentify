@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { DesignSummary } from "@/components/design-summary";
+import { ArtifactDelivery } from "@/components/artifact-delivery";
 import { ProgressRail } from "@/components/progress-rail";
 import { Playground, type PlaygroundRunner } from "@/components/playground";
 import { PromptIntake } from "@/components/prompt-intake";
@@ -10,6 +11,7 @@ import { ProviderStatus } from "@/components/provider-status";
 import { SpecEditor } from "@/components/spec-editor";
 import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
+import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder";
 import { toVisualGraph } from "@/domain/graph";
 import type { PlanAgentResult } from "@/server/planner";
 
@@ -17,15 +19,18 @@ export type Planner = (request: {
   prompt: string;
   deploymentMode: DeploymentMode;
 }) => Promise<PlanAgentResult>;
+export type BuildRunner = (request: BuildAgentInput) => Promise<BuildResult>;
 
 type WorkspaceStatus = "draft" | "planning" | "needs_attention" | "ready" | "failed";
 
 export function Workspace({
   planner = planFromApi,
   playgroundRunner,
+  buildRunner = buildFromApi,
 }: {
   planner?: Planner;
   playgroundRunner?: PlaygroundRunner;
+  buildRunner?: BuildRunner;
 }) {
   const [status, setStatus] = useState<WorkspaceStatus>("draft");
   const [spec, setSpec] = useState<AgentSpec>();
@@ -35,6 +40,9 @@ export function Workspace({
   const [issue, setIssue] = useState<string>();
   const [advanced, setAdvanced] = useState(false);
   const [tested, setTested] = useState(false);
+  const [buildResult, setBuildResult] = useState<BuildResult>();
+  const [building, setBuilding] = useState(false);
+  const [buildIssue, setBuildIssue] = useState<string>();
 
   async function design(request: { prompt: string; deploymentMode: DeploymentMode }) {
     setStatus("planning");
@@ -46,6 +54,7 @@ export function Workspace({
         setProvider(result.provider);
         setStatus(result.spec.decisions.unresolved.length > 0 ? "needs_attention" : "ready");
         setTested(false);
+        setBuildResult(undefined);
         return;
       }
       setSpec(undefined);
@@ -63,6 +72,26 @@ export function Workspace({
     } catch (error) {
       setStatus("failed");
       setIssue(error instanceof Error ? error.message : "Planning failed safely.");
+    }
+  }
+
+  async function build() {
+    if (!spec) {
+      return;
+    }
+    setBuilding(true);
+    setBuildIssue(undefined);
+    try {
+      const result = await buildRunner({
+        spec,
+        target: spec.runtime.target,
+        executionProfile: spec.runtime.deploymentMode,
+      });
+      setBuildResult(result);
+    } catch (error) {
+      setBuildIssue(error instanceof Error ? error.message : "HarnessBuilder is unavailable.");
+    } finally {
+      setBuilding(false);
     }
   }
 
@@ -95,7 +124,19 @@ export function Workspace({
         </div>
       </header>
 
-      <ProgressRail active={tested ? "Test" : spec ? "Design" : "Describe"} />
+      <ProgressRail
+        active={
+          buildResult?.status === "packaged"
+            ? "Deliver"
+            : building || buildResult
+              ? "Build"
+              : tested
+                ? "Test"
+                : spec
+                  ? "Design"
+                  : "Describe"
+        }
+      />
 
       {issue && (
         <p className="error-banner" role="alert">
@@ -122,6 +163,12 @@ export function Workspace({
                 onRunComplete={() => setTested(true)}
                 runner={playgroundRunner}
                 spec={spec}
+              />
+              <ArtifactDelivery
+                building={building}
+                issue={buildIssue}
+                onBuild={build}
+                result={buildResult}
               />
             </>
           ) : (
@@ -152,6 +199,23 @@ async function planFromApi(request: {
   const body = (await response.json()) as PlanAgentResult | { issues?: string[] };
   if (!("status" in body)) {
     throw new Error(body.issues?.join(" ") || "Agent planning failed safely.");
+  }
+  return body;
+}
+
+async function buildFromApi(request: BuildAgentInput): Promise<BuildResult> {
+  const response = await fetch("/api/build", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  const body = (await response.json()) as BuildResult | { issues?: string[] };
+  if (!response.ok || !("buildId" in body)) {
+    const issues =
+      "issues" in body && Array.isArray(body.issues)
+        ? body.issues.filter((issue): issue is string => typeof issue === "string")
+        : undefined;
+    throw new Error(issues?.join(" ") || "HarnessBuilder could not package this agent.");
   }
   return body;
 }
