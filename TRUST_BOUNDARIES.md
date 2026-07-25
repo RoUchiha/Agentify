@@ -4,7 +4,7 @@
 
 The browser holds the user brief, selected deployment mode, validated AgentSpec, Playground input/output, traces, build evidence, and generated files returned for download. It never receives provider or service credentials.
 
-## AgentBuilder server
+## Agentify server
 
 The server owns provider credentials and the HarnessBuilder service token. Provider output is untrusted JSON until the strict AgentSpec schema and semantic rules accept it. Prompt text cannot add unknown fields, undeclared tool references, unbounded retries, or write tools without approval.
 
@@ -16,7 +16,7 @@ The Playground runs only through a configured Ollama or Groq adapter. A provider
 
 ## HarnessBuilder
 
-AgentBuilder submits `AgentSpec v1`, target, execution profile, trace ID, and a SHA-256 idempotency key over a server-to-server request. HarnessBuilder reparses the contract independently and generates only reviewed templates.
+Agentify submits `AgentSpec v1`, target, execution profile, trace ID, and a SHA-256 idempotency key over a server-to-server request. HarnessBuilder reparses the contract independently and generates only reviewed templates.
 
 Its report is static verification evidence, not proof that arbitrary generated integrations ran. Blocking gates scan the complete artifact, including target-specific files. A failed report disables verified download.
 

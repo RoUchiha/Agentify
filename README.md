@@ -1,6 +1,6 @@
-# Agent Builder
+# Agentify
 
-Agent Builder turns one natural-language brief into a validated, testable agent design and a manifest-checked package produced by HarnessBuilder.
+Agentify turns one natural-language brief into a validated, testable agent design and a manifest-checked package produced by HarnessBuilder.
 
 It is a separate application from [HarnessBuilder](https://github.com/RoUchiha/HarnessBuilder), connected through the versioned `AgentSpec v1` contract. A complete low-risk request continues automatically through design, a real configured-provider Playground run, HarnessBuilder generation, static verification, and ZIP delivery. Ambiguity, unavailable providers, write approvals, and failed gates stop visibly.
 
@@ -44,7 +44,7 @@ The UI always names the selected boundary. Hybrid is the default; Local and Clou
 
 ## Local development
 
-Requirements: Node.js 22+ and adjacent AgentBuilder/HarnessBuilder checkouts.
+Requirements: Node.js 22+ and adjacent Agentify/HarnessBuilder checkouts.
 
 Start HarnessBuilder:
 
@@ -54,10 +54,10 @@ npm.cmd ci
 npm.cmd run dev -- -p 3001
 ```
 
-Start Agent Builder in another terminal:
+Start Agentify in another terminal:
 
 ```powershell
-cd C:\path\to\AgentBuilder
+cd C:\path\to\Agentify
 npm.cmd ci
 $env:HARNESS_BUILDER_URL = "http://127.0.0.1:3001"
 $env:GROQ_API_KEY = "<server-side value>"
@@ -73,13 +73,13 @@ $env:OLLAMA_MODEL = "qwen3"
 
 Environment variables:
 
-| Variable                        | Where                              | Purpose                              |
-| ------------------------------- | ---------------------------------- | ------------------------------------ |
-| `GROQ_API_KEY`                  | AgentBuilder server only           | Groq planning and Playground runs    |
-| `OLLAMA_BASE_URL`               | AgentBuilder server only           | paired Ollama HTTP endpoint          |
-| `OLLAMA_MODEL`                  | AgentBuilder server only           | eligible local model                 |
-| `HARNESS_BUILDER_URL`           | AgentBuilder server only           | versioned build service              |
-| `HARNESS_BUILDER_SERVICE_TOKEN` | AgentBuilder server only, optional | service-to-service bearer credential |
+| Variable                        | Where                          | Purpose                              |
+| ------------------------------- | ------------------------------ | ------------------------------------ |
+| `GROQ_API_KEY`                  | Agentify server only           | Groq planning and Playground runs    |
+| `OLLAMA_BASE_URL`               | Agentify server only           | paired Ollama HTTP endpoint          |
+| `OLLAMA_MODEL`                  | Agentify server only           | eligible local model                 |
+| `HARNESS_BUILDER_URL`           | Agentify server only           | versioned build service              |
+| `HARNESS_BUILDER_SERVICE_TOKEN` | Agentify server only, optional | service-to-service bearer credential |
 
 No credential is accepted in the browser request, AgentSpec, generated source, report, or ZIP.
 
@@ -88,7 +88,7 @@ No credential is accepted in the browser request, AgentSpec, generated source, r
 Development followed three explicit layers:
 
 - Before and during implementation: each domain, provider, API, UI, and connector behavior was observed failing before production code was added.
-- Integrated product: AgentBuilder and HarnessBuilder contract matrices cover every target and execution profile.
+- Integrated product: Agentify and HarnessBuilder contract matrices cover every target and execution profile.
 - After the full product existed: independent hardening and browser suites were added. Those tests found and permanently cover undeclared workflow references, oversized requests, provider cooldown rendering, ZIP traversal, automatic trace visibility, and route export boundaries.
 
 Run the release gate:

@@ -9,7 +9,7 @@ import {
 } from "@/domain/agent-spec";
 import { demoAgentSpec } from "@/domain/demo";
 
-describe("post-build AgentBuilder to HarnessBuilder contract", () => {
+describe("post-build Agentify to HarnessBuilder contract", () => {
   test.each(
     ARTIFACT_TARGETS.flatMap((target) =>
       DEPLOYMENT_MODES.map((executionProfile) => [target, executionProfile] as const),

@@ -153,7 +153,7 @@ export function Workspace(props: WorkspaceProps) {
     <main className="workspace-shell">
       <header className="workspace-header">
         <div>
-          <p className="eyebrow">Agent Builder / describe → verify → deliver</p>
+          <p className="eyebrow">Agentify / describe → verify → deliver</p>
           <h1>Describe the agent you need.</h1>
           <p className="workspace-lede">
             Start with the outcome. Inspect every assumption before HarnessBuilder turns it into a

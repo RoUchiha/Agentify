@@ -39,9 +39,7 @@ test("one prompt advances through the visible design, test, build, and delivery 
   expect(consoleErrors).toEqual([]);
 });
 
-test("the AgentBuilder server reaches the real HarnessBuilder build endpoint", async ({
-  request,
-}) => {
+test("the Agentify server reaches the real HarnessBuilder build endpoint", async ({ request }) => {
   const response = await request.post("/api/build", {
     data: {
       spec: demoAgentSpec,

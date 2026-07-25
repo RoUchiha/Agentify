@@ -1,10 +1,10 @@
-# Agent Builder MVP Implementation Plan
+# Agentify MVP Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a separate Agent Builder web application that converts a natural-language request into a validated `AgentSpec`, supports visual refinement and real provider-backed playground runs, then sends the immutable spec to HarnessBuilder and returns a verified downloadable agent package.
+**Goal:** Build a separate Agentify web application that converts a natural-language request into a validated `AgentSpec`, supports visual refinement and real provider-backed playground runs, then sends the immutable spec to HarnessBuilder and returns a verified downloadable agent package.
 
-**Architecture:** Agent Builder is a Next.js control plane with pure TypeScript domain modules for contracts, policy, provider selection, graph derivation, and artifact selection. Server routes keep provider credentials out of the browser. HarnessBuilder gains a versioned `AgentSpec` adapter and build route that maps the portable contract into its existing deterministic planning, generation, and verification pipeline.
+**Architecture:** Agentify is a Next.js control plane with pure TypeScript domain modules for contracts, policy, provider selection, graph derivation, and artifact selection. Server routes keep provider credentials out of the browser. HarnessBuilder gains a versioned `AgentSpec` adapter and build route that maps the portable contract into its existing deterministic planning, generation, and verification pipeline.
 
 **Tech Stack:** Node.js 22, Next.js 15.5.21, React 19.1, TypeScript 5.8, Zod 4, YAML 2.8, Vitest 4, Testing Library, Playwright, ESLint 9, Prettier 3, Groq OpenAI-compatible API, Ollama HTTP API.
 
@@ -25,7 +25,7 @@
 
 ## File map
 
-### AgentBuilder repository
+### Agentify repository
 
 - `src/domain/agent-spec.ts`: canonical Zod contract and inferred TypeScript types.
 - `src/domain/normalize.ts`: prompt-planner payload normalization and assumption separation.
@@ -60,7 +60,7 @@
 
 ---
 
-### Task 1: Bootstrap AgentBuilder and define `AgentSpec v1`
+### Task 1: Bootstrap Agentify and define `AgentSpec v1`
 
 **Files:**
 - Create: `package.json`, `package-lock.json`, `tsconfig.json`, `next.config.ts`, `vitest.config.ts`, `eslint.config.mjs`, `.prettierrc.json`, `.gitignore`
@@ -550,7 +550,7 @@ Document real versus unavailable behavior, Free Auto resolution, Groq and Ollama
 
 - [ ] **Step 5: Run the final release gate**
 
-AgentBuilder:
+Agentify:
 
 ```powershell
 npm.cmd test
@@ -585,7 +585,7 @@ Expected: every command exits 0; tests report zero failures; production builds s
 
 ```powershell
 git add e2e tests/hardening .github README.md SECURITY.md TRUST_BOUNDARIES.md package.json playwright.config.ts src
-git commit -m "test: harden and document Agent Builder release"
+git commit -m "test: harden and document Agentify release"
 ```
 
 ---

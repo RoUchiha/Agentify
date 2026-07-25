@@ -1,10 +1,10 @@
-# Agent Builder design
+# Agentify design
 
 ## Decision
 
-Agent Builder is a separate, spec-driven application that turns one natural-language request into a testable agent design and then sends the accepted design directly to HarnessBuilder for code generation, test execution, verification, and packaging.
+Agentify is a separate, spec-driven application that turns one natural-language request into a testable agent design and then sends the accepted design directly to HarnessBuilder for code generation, test execution, verification, and packaging.
 
-The products remain independently deployable. Their integration boundary is a versioned, provider-neutral `AgentSpec` contract and a versioned HarnessBuilder build API. Agent Builder owns intent discovery, visual refinement, playground testing, and artifact selection. HarnessBuilder remains authoritative for harness planning, source generation, release gates, evidence, and delivery artifacts.
+The products remain independently deployable. Their integration boundary is a versioned, provider-neutral `AgentSpec` contract and a versioned HarnessBuilder build API. Agentify owns intent discovery, visual refinement, playground testing, and artifact selection. HarnessBuilder remains authoritative for harness planning, source generation, release gates, evidence, and delivery artifacts.
 
 The first release supports single agents by default. A persistent Advanced control reveals multi-agent teams, handoffs, routing, shared state, checkpoints, and workflow orchestration without creating a separate product or specification format.
 
@@ -23,7 +23,7 @@ The application never calls a project complete merely because a model produced p
 
 ## Research-derived product model
 
-Agent Builder follows established interaction patterns without copying source code, branding, or proprietary assets:
+Agentify follows established interaction patterns without copying source code, branding, or proprietary assets:
 
 - Langflow uses a visual workspace, a Playground, logs, API integration, JSON export, MCP exposure, and shareable experiences.
 - Flowise Agentflow V2 uses explicit workflow nodes, declared shared state, streaming execution, resumable human-input checkpoints, MCP tools, and reusable subflows.
@@ -122,7 +122,7 @@ The demo does not simulate repository publication or provider execution.
 
 ## System architecture
 
-### Agent Builder control plane
+### Agentify control plane
 
 - **Next.js application:** project workspace, guided intake, visual editor, Playground, run history, evidence viewer, and delivery controls.
 - **Planner service:** provider-neutral structured-output interface for OpenAI, Anthropic, Google, Groq, and Ollama adapters.
@@ -261,7 +261,7 @@ Retries are bounded and visible. Deterministic failures are not retried without 
 
 ## Testing strategy
 
-Testing applies both to Agent Builder itself and to every generated agent.
+Testing applies both to Agentify itself and to every generated agent.
 
 ### Wave 1: tests before product code
 
@@ -331,7 +331,7 @@ Generated fixtures identify whether they are user-provided, spec-derived, adapte
 5. Hybrid is the recommended default, while Local and Cloud are functional selectable modes with accurate boundary disclosure.
 6. The Playground supports whole-flow and isolated-component tests, visible traces, approvals, artifacts, and operator controls.
 7. The selector produces TypeScript Agents SDK, Python Agents SDK, MCP server, or portable spec output based on declared capabilities and allows an Advanced override.
-8. Agent Builder submits an immutable spec to HarnessBuilder and displays real resumable build state.
+8. Agentify submits an immutable spec to HarnessBuilder and displays real resumable build state.
 9. HarnessBuilder generates tests before implementation, records red evidence, runs the completed suite, adds post-build hardening tests, and blocks packaging on failure.
 10. A passing build returns source, tests, CI, spec, README, AGENTS.md, verification reports, checksums, and a downloadable archive.
 11. Secrets do not appear in browser state, prompts beyond explicit provider needs, source, archives, logs, traces, or reports.
@@ -363,7 +363,7 @@ Generated fixtures identify whether they are user-provided, spec-derived, adapte
 ## Spec self-review
 
 - No placeholders, deferred requirements, or ambiguous “automatic” behavior remain.
-- Agent Builder and HarnessBuilder responsibilities are separate and connected only through a versioned contract.
+- Agentify and HarnessBuilder responsibilities are separate and connected only through a versioned contract.
 - The selected features match the researched builder patterns while preserving an original implementation and stronger production verification boundary.
 - Quick and Advanced modes use one spec and one pipeline.
 - Hybrid, Local, and Cloud boundaries agree with provider, credential, runner, and artifact behavior.

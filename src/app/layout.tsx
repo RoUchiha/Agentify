@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Agent Builder",
+  title: "Agentify",
   description: "Describe, test, and build a verified AI agent.",
 };
 

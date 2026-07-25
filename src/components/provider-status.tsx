@@ -24,7 +24,7 @@ export function ProviderStatus({
       </span>
       <p>
         {provider?.reason ??
-          "Agent Builder checks for a capable local model before using configured free cloud inference."}
+          "Agentify checks for a capable local model before using configured free cloud inference."}
       </p>
     </section>
   );
