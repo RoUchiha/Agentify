@@ -3,10 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
 
 import { Workspace } from "@/components/workspace";
+import { materializeCustomization } from "@/domain/customization";
 import { demoAgentSpec } from "@/domain/demo";
 
 describe("post-build automatic pipeline acceptance", () => {
   test("one natural-language brief continues through test and verified build when safe", async () => {
+    const expectedSpec = materializeCustomization(demoAgentSpec);
     const playgroundRunner = vi.fn().mockResolvedValue({
       status: "completed",
       output: { category: "account-access" },
@@ -35,7 +37,7 @@ describe("post-build automatic pipeline acceptance", () => {
           gates: [],
           files: ["README.md"],
           immutableSpec: { path: "harness.spec.yaml", checksum: "abc" },
-          agentSpecVersion: "1.0",
+          agentSpecVersion: "1.1",
           artifactTarget: "openai-agents-ts",
           executionProfile: "hybrid",
         },
@@ -69,15 +71,52 @@ describe("post-build automatic pipeline acceptance", () => {
 
     expect(await screen.findByText("automatic-build")).toBeInTheDocument();
     expect(playgroundRunner).toHaveBeenCalledWith({
-      spec: demoAgentSpec,
-      input: demoAgentSpec.evaluations[0].input,
+      spec: expectedSpec,
+      input: expectedSpec.evaluations[0].input,
     });
     expect(buildRunner).toHaveBeenCalledWith({
-      spec: demoAgentSpec,
+      spec: expectedSpec,
       target: "openai-agents-ts",
       executionProfile: "hybrid",
     });
     expect(screen.getByRole("status")).toHaveTextContent(/package ready/i);
     expect(screen.getByRole("region", { name: /run trace/i })).toHaveTextContent(/completed/i);
+  });
+
+  test("does not auto-run while a required model profile is missing", async () => {
+    const playgroundRunner = vi.fn();
+    const buildRunner = vi.fn();
+    render(
+      <Workspace
+        autoContinue
+        buildRunner={buildRunner}
+        planner={vi.fn().mockResolvedValue({
+          status: "ready",
+          spec: {
+            ...demoAgentSpec,
+            models: {
+              ...demoAgentSpec.models,
+              mode: "fixed",
+              preferredProvider: "groq",
+            },
+          },
+          provider: { id: "groq", dataBoundary: "cloud", reason: "Groq selected." },
+        })}
+        playgroundRunner={playgroundRunner}
+      />,
+    );
+
+    await userEvent.type(
+      screen.getByLabelText(/what should your agent accomplish/i),
+      "Build an agent that triages support tickets.",
+    );
+    await userEvent.click(screen.getByRole("button", { name: /design my agent/i }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Which model profile should the agents use?" }),
+    ).toBeVisible();
+    expect(playgroundRunner).not.toHaveBeenCalled();
+    expect(buildRunner).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /resolve 1 required decision/i })).toBeDisabled();
   });
 });

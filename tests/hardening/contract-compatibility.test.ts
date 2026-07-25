@@ -8,6 +8,7 @@ import {
   type DeploymentMode,
 } from "@/domain/agent-spec";
 import { demoAgentSpec } from "@/domain/demo";
+import { materializeCustomization } from "@/domain/customization";
 
 describe("post-build Agentify to HarnessBuilder contract", () => {
   test.each(
@@ -32,6 +33,58 @@ describe("post-build Agentify to HarnessBuilder contract", () => {
       target,
       executionProfile,
       idempotencyKey: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+  });
+
+  test("preserves every accepted customization through the HarnessBuilder request", async () => {
+    let requestBody: Record<string, unknown> | undefined;
+    const fetcher = vi.fn().mockImplementation(async (_url, init) => {
+      requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Response.json(successResponse("openai-agents-ts", "hybrid"));
+    });
+    const customized = materializeCustomization(demoAgentSpec);
+    customized.customization!.modelProfiles.push({
+      id: "primary",
+      provider: "groq",
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.2,
+      topP: 1,
+      maxOutputTokens: 8_000,
+      seed: 7,
+      reasoningEffort: "none",
+      toolChoice: "auto",
+      parallelToolCalls: false,
+      structuredOutput: "required",
+      timeoutMs: 60_000,
+      fallbackProfileIds: [],
+    });
+    customized.customization!.agentModelProfiles["triage-agent"] = "primary";
+
+    await buildAgent(
+      {
+        spec: customized,
+        target: "openai-agents-ts",
+        executionProfile: "hybrid",
+      },
+      { baseUrl: "http://harness.local", fetcher },
+    );
+
+    expect(requestBody?.agentSpec).toEqual(customized);
+    expect(requestBody).toMatchObject({
+      contractVersion: "1.0",
+      agentSpec: {
+        metadata: { version: "1.1" },
+        customization: {
+          modelProfiles: [
+            expect.objectContaining({
+              provider: "groq",
+              model: "llama-3.3-70b-versatile",
+              seed: 7,
+            }),
+          ],
+          agentModelProfiles: { "triage-agent": "primary" },
+        },
+      },
     });
   });
 });

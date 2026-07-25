@@ -10,11 +10,13 @@ export function ArtifactDelivery({
   building = false,
   issue,
   onBuild,
+  blockedReason,
 }: {
   result?: BuildResult;
   building?: boolean;
   issue?: string;
   onBuild(): void;
+  blockedReason?: string;
 }) {
   const canDownload = result?.status === "packaged" && result.report.status === "passed";
 
@@ -34,8 +36,13 @@ export function ArtifactDelivery({
             Send the immutable AgentSpec to HarnessBuilder for deterministic generation and blocking
             verification gates.
           </p>
-          <button className="primary-action" disabled={building} onClick={onBuild} type="button">
-            {building ? "Building..." : "Build verified agent"}
+          <button
+            className="primary-action"
+            disabled={building || Boolean(blockedReason)}
+            onClick={onBuild}
+            type="button"
+          >
+            {blockedReason ?? (building ? "Building..." : "Build verified agent")}
           </button>
         </div>
       ) : (

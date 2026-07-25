@@ -2,18 +2,23 @@
 
 import { useState } from "react";
 
+import { BuildModeToggle, type BuildMode } from "@/components/build-mode-toggle";
+import { AdvancedStudio } from "@/components/advanced-studio";
 import { DesignSummary } from "@/components/design-summary";
 import { ArtifactDelivery } from "@/components/artifact-delivery";
 import { ProgressRail } from "@/components/progress-rail";
 import { Playground, runPlaygroundFromApi, type PlaygroundRunner } from "@/components/playground";
 import { PromptIntake } from "@/components/prompt-intake";
 import { ProviderStatus } from "@/components/provider-status";
-import { SpecEditor } from "@/components/spec-editor";
+import { QuickFollowups } from "@/components/quick-followups";
 import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
 import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder";
+import { materializeCustomization } from "@/domain/customization";
+import { adviseSpec } from "@/domain/advisor";
 import { toVisualGraph } from "@/domain/graph";
 import { evaluateSpec } from "@/domain/policy";
+import { analyzeRequirements } from "@/domain/requirements-coverage";
 import type { PlanAgentResult } from "@/server/planner";
 import type { PlaygroundRun } from "@/server/playground";
 
@@ -51,12 +56,20 @@ export function Workspace(props: WorkspaceProps) {
     { id: "ollama" | "groq"; dataBoundary: "local" | "cloud"; reason: string } | undefined
   >();
   const [issue, setIssue] = useState<string>();
-  const [advanced, setAdvanced] = useState(false);
+  const [mode, setMode] = useState<BuildMode>("quick");
+  const [dismissedFindingIds, setDismissedFindingIds] = useState<Set<string>>(() => new Set());
   const [tested, setTested] = useState(false);
   const [buildResult, setBuildResult] = useState<BuildResult>();
   const [building, setBuilding] = useState(false);
   const [buildIssue, setBuildIssue] = useState<string>();
   const [playgroundResult, setPlaygroundResult] = useState<PlaygroundRun>();
+  const coverage = spec ? analyzeRequirements(spec) : undefined;
+  const findings = spec ? adviseSpec(spec, dismissedFindingIds) : [];
+  const blockingGapCount = coverage?.gaps.filter((gap) => gap.severity === "blocking").length ?? 0;
+  const blockedReason =
+    blockingGapCount > 0
+      ? `Resolve ${blockingGapCount} required decision${blockingGapCount === 1 ? "" : "s"}`
+      : undefined;
 
   async function design(request: { prompt: string; deploymentMode: DeploymentMode }) {
     setStatus("planning");
@@ -64,15 +77,18 @@ export function Workspace(props: WorkspaceProps) {
     try {
       const result = await planner(request);
       if (result.status === "ready") {
-        setSpec(result.spec);
+        const acceptedSpec = materializeCustomization(result.spec);
+        setDismissedFindingIds(new Set());
+        setSpec(acceptedSpec);
         setProvider(result.provider);
-        const decision = evaluateSpec(result.spec);
-        setStatus(decision.status);
+        const decision = evaluateSpec(acceptedSpec);
+        const nextCoverage = analyzeRequirements(acceptedSpec);
+        setStatus(nextCoverage.complete ? decision.status : "needs_attention");
         setTested(false);
         setBuildResult(undefined);
         setPlaygroundResult(undefined);
-        if (autoContinue && decision.status === "ready") {
-          await runAutomaticPipeline(result.spec);
+        if (autoContinue && nextCoverage.complete && decision.status === "ready") {
+          await runAutomaticPipeline(acceptedSpec);
         }
         return;
       }
@@ -130,6 +146,11 @@ export function Workspace(props: WorkspaceProps) {
     if (!spec) {
       return;
     }
+    if (!analyzeRequirements(spec).complete) {
+      setBuildIssue("Resolve the required Quick Build decisions before packaging.");
+      setStatus("needs_attention");
+      return;
+    }
     setBuilding(true);
     setStatus("building");
     setBuildIssue(undefined);
@@ -149,6 +170,20 @@ export function Workspace(props: WorkspaceProps) {
     }
   }
 
+  function acceptSpec(nextSpec: AgentSpec, automatic = false) {
+    const nextCoverage = analyzeRequirements(nextSpec);
+    const decision = evaluateSpec(nextSpec);
+    setSpec(nextSpec);
+    setStatus(nextCoverage.complete ? decision.status : "needs_attention");
+    setTested(false);
+    setBuildResult(undefined);
+    setBuildIssue(undefined);
+    setPlaygroundResult(undefined);
+    if (automatic && autoContinue && nextCoverage.complete && decision.status === "ready") {
+      void runAutomaticPipeline(nextSpec);
+    }
+  }
+
   return (
     <main className="workspace-shell">
       <header className="workspace-header">
@@ -161,17 +196,7 @@ export function Workspace(props: WorkspaceProps) {
           </p>
         </div>
         <div className="header-controls">
-          <label className="advanced-toggle">
-            <span>Advanced</span>
-            <input
-              aria-label="Advanced"
-              aria-checked={advanced}
-              checked={advanced}
-              onChange={(event) => setAdvanced(event.target.checked)}
-              role="switch"
-              type="checkbox"
-            />
-          </label>
+          <BuildModeToggle mode={mode} onChange={setMode} />
           <span className={`run-state ${status}`} role="status">
             {statusLabel(status)}
           </span>
@@ -207,13 +232,28 @@ export function Workspace(props: WorkspaceProps) {
           {spec ? (
             <>
               <DesignSummary spec={spec} />
-              {advanced && (
+              {mode === "quick" && coverage && (
+                <QuickFollowups
+                  coverage={coverage}
+                  onChange={(nextSpec) => acceptSpec(nextSpec, true)}
+                  spec={spec}
+                />
+              )}
+              {mode === "advanced" && (
                 <div className="advanced-grid">
                   <VisualCanvas graph={toVisualGraph(spec)} />
-                  <SpecEditor onChange={setSpec} spec={spec} />
+                  <AdvancedStudio
+                    findings={findings}
+                    onChange={(nextSpec) => acceptSpec(nextSpec)}
+                    onDismissFinding={(id) =>
+                      setDismissedFindingIds((current) => new Set(current).add(id))
+                    }
+                    spec={spec}
+                  />
                 </div>
               )}
               <Playground
+                blockedReason={blockedReason}
                 onRunComplete={(result) => {
                   setTested(true);
                   setPlaygroundResult(result);
@@ -223,6 +263,7 @@ export function Workspace(props: WorkspaceProps) {
                 spec={spec}
               />
               <ArtifactDelivery
+                blockedReason={blockedReason}
                 building={building}
                 issue={buildIssue}
                 onBuild={build}

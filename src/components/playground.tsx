@@ -14,11 +14,13 @@ export function Playground({
   runner = runPlaygroundFromApi,
   runResult,
   onRunComplete,
+  blockedReason,
 }: {
   spec: AgentSpec;
   runner?: PlaygroundRunner;
   runResult?: PlaygroundRun;
   onRunComplete?(run: PlaygroundRun): void;
+  blockedReason?: string;
 }) {
   const [input, setInput] = useState(() =>
     JSON.stringify(spec.evaluations[0]?.input ?? {}, null, 2),
@@ -30,6 +32,7 @@ export function Playground({
   const displayedRun = runResult ?? run;
 
   async function submit() {
+    if (blockedReason) return;
     let parsedInput: unknown;
     try {
       parsedInput = JSON.parse(input);
@@ -76,8 +79,17 @@ export function Playground({
               {issue}
             </p>
           )}
-          <button className="primary-action" disabled={busy} onClick={submit} type="button">
-            {busy ? "Running test..." : "Run test"}
+          <button
+            className="primary-action"
+            disabled={busy || Boolean(blockedReason)}
+            onClick={submit}
+            type="button"
+          >
+            {blockedReason
+              ? "Resolve decisions before testing"
+              : busy
+                ? "Running test..."
+                : "Run test"}
           </button>
         </div>
         <div className="playground-results">
