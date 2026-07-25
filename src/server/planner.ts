@@ -47,7 +47,10 @@ export async function planAgent(
 
   const proposed = await provider.plan(request);
   const parsed = normalizePlannerPayload(proposed);
-  const spec = parsed.success ? parsed.data : buildSafeBaseline(request);
+  const spec = preserveMaterialPromptDecisions(
+    parsed.success ? parsed.data : buildSafeBaseline(request),
+    request.prompt,
+  );
 
   return {
     status: "ready",
@@ -58,6 +61,43 @@ export async function planAgent(
       reason: resolution.reason,
     },
   };
+}
+
+function preserveMaterialPromptDecisions(spec: AgentSpec, prompt: string): AgentSpec {
+  const inferred = inferMaterialPromptDecisions(prompt);
+  if (inferred.length === 0) return spec;
+  return AgentSpecSchema.parse({
+    ...spec,
+    decisions: {
+      ...spec.decisions,
+      unresolved: unique([...spec.decisions.unresolved, ...inferred]),
+    },
+  });
+}
+
+function inferMaterialPromptDecisions(prompt: string): string[] {
+  const normalized = prompt.toLowerCase();
+  const ambiguityIsExplicit =
+    /\b(not (?:yet )?(?:chosen|selected|decided)|unspecified|undecided|choose later|which)\b/.test(
+      normalized,
+    );
+  if (!ambiguityIsExplicit) return [];
+
+  const decisions: string[] = [];
+  const selectedCrm =
+    /\b(hubspot|salesforce|dynamics 365|microsoft dynamics|zoho|pipedrive)\b/.test(normalized);
+  if (/\bcrm\b/.test(normalized) && !selectedCrm) {
+    decisions.push("Which CRM should receive updates?");
+  }
+
+  const selectedDatabase = /\b(postgres(?:ql)?|mysql|sqlite|mongodb|dynamodb|supabase)\b/.test(
+    normalized,
+  );
+  if (/\bdatabase\b/.test(normalized) && !selectedDatabase) {
+    decisions.push("Which database should the agent use?");
+  }
+
+  return decisions;
 }
 
 function buildSafeBaseline(request: PlanAgentRequest): AgentSpec {
@@ -140,4 +180,8 @@ function buildSafeBaseline(request: PlanAgentRequest): AgentSpec {
       unresolved: [],
     },
   });
+}
+
+function unique<T>(values: T[]): T[] {
+  return [...new Set(values)];
 }

@@ -104,6 +104,96 @@ describe("planAgent", () => {
     });
   });
 
+  test("preserves an explicitly missing CRM decision when provider output is invalid", async () => {
+    const result = await planAgent(
+      {
+        prompt:
+          "Build a support agent that recommends a CRM update, but I have not chosen which CRM.",
+        deploymentMode: "hybrid",
+      },
+      {
+        availability: {
+          ollama: { provider: "ollama", available: false, dataBoundary: "local" },
+          groq: { provider: "groq", available: true, dataBoundary: "cloud" },
+        },
+        providers: {
+          groq: {
+            id: "groq",
+            plan: vi.fn().mockResolvedValue({ name: "incomplete" }),
+            run: vi.fn(),
+          },
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      status: "ready",
+      spec: {
+        decisions: {
+          unresolved: ["Which CRM should receive updates?"],
+        },
+      },
+    });
+  });
+
+  test("does not let a valid provider proposal erase a material prompt ambiguity", async () => {
+    const result = await planAgent(
+      {
+        prompt: "Build a support agent that recommends a CRM update; the CRM is unspecified.",
+        deploymentMode: "hybrid",
+      },
+      {
+        availability: {
+          ollama: { provider: "ollama", available: false, dataBoundary: "local" },
+          groq: { provider: "groq", available: true, dataBoundary: "cloud" },
+        },
+        providers: {
+          groq: {
+            id: "groq",
+            plan: vi.fn().mockResolvedValue(demoAgentSpec),
+            run: vi.fn(),
+          },
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      status: "ready",
+      spec: {
+        decisions: {
+          unresolved: ["Which CRM should receive updates?"],
+        },
+      },
+    });
+  });
+
+  test("does not ask for a CRM when the prompt explicitly selects one", async () => {
+    const result = await planAgent(
+      {
+        prompt: "Build a support agent that drafts approved HubSpot updates.",
+        deploymentMode: "hybrid",
+      },
+      {
+        availability: {
+          ollama: { provider: "ollama", available: false, dataBoundary: "local" },
+          groq: { provider: "groq", available: true, dataBoundary: "cloud" },
+        },
+        providers: {
+          groq: {
+            id: "groq",
+            plan: vi.fn().mockResolvedValue(demoAgentSpec),
+            run: vi.fn(),
+          },
+        },
+      },
+    );
+
+    expect(result).toMatchObject({ status: "ready" });
+    if (result.status === "ready") {
+      expect(result.spec.decisions.unresolved).not.toContain("Which CRM should receive updates?");
+    }
+  });
+
   test("does not call a provider when Free Auto needs a connection", async () => {
     const result = await planAgent(
       { prompt: "Build a useful support agent.", deploymentMode: "hybrid" },
