@@ -22,6 +22,10 @@ export type ProviderRunInput = {
 export type ProviderRunOutput = {
   output: unknown;
   usage?: { inputTokens?: number; outputTokens?: number };
+  toolRequest?: {
+    toolId: string;
+    arguments: unknown;
+  };
 };
 
 export interface PlannerProvider {

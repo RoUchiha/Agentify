@@ -57,4 +57,61 @@ describe("provider adapters", () => {
       expect.objectContaining({ method: "POST" }),
     );
   });
+
+  test("Groq runs a validated AgentSpec without exposing the server credential", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                output: { category: "account-access", evidence: ["Password reset request"] },
+                usage: { inputTokens: 19, outputTokens: 11 },
+              }),
+            },
+          },
+        ],
+      }),
+    );
+    const provider = new GroqProvider({ apiKey: "server-secret", fetcher });
+
+    await expect(
+      provider.run?.({
+        spec: demoAgentSpec,
+        input: { ticket: "I cannot reset my password." },
+      }),
+    ).resolves.toMatchObject({ output: { category: "account-access" } });
+
+    const request = JSON.parse(String(fetcher.mock.calls[0][1]?.body)) as {
+      messages: Array<{ content: string }>;
+    };
+    expect(request.messages.map((message) => message.content).join(" ")).not.toContain(
+      "server-secret",
+    );
+    expect(request.messages.map((message) => message.content).join(" ")).toContain(
+      "Support triage",
+    );
+  });
+
+  test("Ollama runs the same portable AgentSpec through its local API", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json({
+        response: JSON.stringify({
+          output: { category: "account-access", evidence: ["Password reset request"] },
+        }),
+      }),
+    );
+    const provider = new OllamaProvider({
+      baseUrl: "http://127.0.0.1:11434",
+      model: "qwen3",
+      fetcher,
+    });
+
+    await expect(
+      provider.run?.({
+        spec: demoAgentSpec,
+        input: { ticket: "I cannot reset my password." },
+      }),
+    ).resolves.toMatchObject({ output: { category: "account-access" } });
+  });
 });

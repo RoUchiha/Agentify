@@ -1,5 +1,15 @@
-import { buildAgentSpecMessages, parseProviderJson } from "@/providers/prompt";
-import { ProviderRequestError, type PlannerProvider, type ProviderPlanInput } from "@/providers/types";
+import {
+  buildAgentRunMessages,
+  buildAgentSpecMessages,
+  parseProviderJson,
+} from "@/providers/prompt";
+import {
+  ProviderRequestError,
+  type PlannerProvider,
+  type ProviderPlanInput,
+  type ProviderRunInput,
+  type ProviderRunOutput,
+} from "@/providers/types";
 
 type Fetcher = typeof fetch;
 
@@ -35,5 +45,42 @@ export class OllamaProvider implements PlannerProvider {
 
     const body = (await response.json()) as { response?: unknown };
     return parseProviderJson(body.response);
+  }
+
+  async run(input: ProviderRunInput): Promise<ProviderRunOutput> {
+    const messages = buildAgentRunMessages(input.spec, input.input);
+    const response = await this.fetcher(`${this.baseUrl}/api/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: this.model,
+        prompt: messages.map((message) => `${message.role}: ${message.content}`).join("\n\n"),
+        format: "json",
+        stream: false,
+      }),
+      signal: AbortSignal.timeout(input.spec.budgets.timeoutMs),
+    });
+
+    if (!response.ok) {
+      throw new ProviderRequestError("Local Ollama could not run this agent.", response.status);
+    }
+
+    const body = (await response.json()) as {
+      response?: unknown;
+      prompt_eval_count?: number;
+      eval_count?: number;
+    };
+    const parsed = parseProviderJson(body.response);
+    const result =
+      typeof parsed === "object" && parsed !== null
+        ? (parsed as ProviderRunOutput)
+        : { output: parsed };
+    return {
+      ...result,
+      usage: result.usage ?? {
+        inputTokens: body.prompt_eval_count,
+        outputTokens: body.eval_count,
+      },
+    };
   }
 }

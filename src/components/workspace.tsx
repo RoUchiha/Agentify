@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { DesignSummary } from "@/components/design-summary";
 import { ProgressRail } from "@/components/progress-rail";
+import { Playground, type PlaygroundRunner } from "@/components/playground";
 import { PromptIntake } from "@/components/prompt-intake";
 import { ProviderStatus } from "@/components/provider-status";
 import { SpecEditor } from "@/components/spec-editor";
@@ -19,7 +20,13 @@ export type Planner = (request: {
 
 type WorkspaceStatus = "draft" | "planning" | "needs_attention" | "ready" | "failed";
 
-export function Workspace({ planner = planFromApi }: { planner?: Planner }) {
+export function Workspace({
+  planner = planFromApi,
+  playgroundRunner,
+}: {
+  planner?: Planner;
+  playgroundRunner?: PlaygroundRunner;
+}) {
   const [status, setStatus] = useState<WorkspaceStatus>("draft");
   const [spec, setSpec] = useState<AgentSpec>();
   const [provider, setProvider] = useState<
@@ -27,6 +34,7 @@ export function Workspace({ planner = planFromApi }: { planner?: Planner }) {
   >();
   const [issue, setIssue] = useState<string>();
   const [advanced, setAdvanced] = useState(false);
+  const [tested, setTested] = useState(false);
 
   async function design(request: { prompt: string; deploymentMode: DeploymentMode }) {
     setStatus("planning");
@@ -37,6 +45,7 @@ export function Workspace({ planner = planFromApi }: { planner?: Planner }) {
         setSpec(result.spec);
         setProvider(result.provider);
         setStatus(result.spec.decisions.unresolved.length > 0 ? "needs_attention" : "ready");
+        setTested(false);
         return;
       }
       setSpec(undefined);
@@ -86,7 +95,7 @@ export function Workspace({ planner = planFromApi }: { planner?: Planner }) {
         </div>
       </header>
 
-      <ProgressRail active={spec ? "Design" : "Describe"} />
+      <ProgressRail active={tested ? "Test" : spec ? "Design" : "Describe"} />
 
       {issue && (
         <p className="error-banner" role="alert">
@@ -109,6 +118,11 @@ export function Workspace({ planner = planFromApi }: { planner?: Planner }) {
                   <SpecEditor onChange={setSpec} spec={spec} />
                 </div>
               )}
+              <Playground
+                onRunComplete={() => setTested(true)}
+                runner={playgroundRunner}
+                spec={spec}
+              />
             </>
           ) : (
             <section className="empty-design panel">

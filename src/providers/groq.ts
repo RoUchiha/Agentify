@@ -1,5 +1,15 @@
-import { buildAgentSpecMessages, parseProviderJson } from "@/providers/prompt";
-import { ProviderRequestError, type PlannerProvider, type ProviderPlanInput } from "@/providers/types";
+import {
+  buildAgentRunMessages,
+  buildAgentSpecMessages,
+  parseProviderJson,
+} from "@/providers/prompt";
+import {
+  ProviderRequestError,
+  type PlannerProvider,
+  type ProviderPlanInput,
+  type ProviderRunInput,
+  type ProviderRunOutput,
+} from "@/providers/types";
 
 type Fetcher = typeof fetch;
 
@@ -39,6 +49,44 @@ export class GroqProvider implements PlannerProvider {
       choices?: Array<{ message?: { content?: unknown } }>;
     };
     return parseProviderJson(body.choices?.[0]?.message?.content);
+  }
+
+  async run(input: ProviderRunInput): Promise<ProviderRunOutput> {
+    const response = await this.fetcher("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${this.apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: buildAgentRunMessages(input.spec, input.input),
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      }),
+      signal: AbortSignal.timeout(input.spec.budgets.timeoutMs),
+    });
+
+    if (!response.ok) {
+      throw providerError(response, "Groq could not run this agent.");
+    }
+
+    const body = (await response.json()) as {
+      choices?: Array<{ message?: { content?: unknown } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    const parsed = parseProviderJson(body.choices?.[0]?.message?.content);
+    const result =
+      typeof parsed === "object" && parsed !== null
+        ? (parsed as ProviderRunOutput)
+        : { output: parsed };
+    return {
+      ...result,
+      usage: result.usage ?? {
+        inputTokens: body.usage?.prompt_tokens,
+        outputTokens: body.usage?.completion_tokens,
+      },
+    };
   }
 }
 
