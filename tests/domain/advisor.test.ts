@@ -127,9 +127,7 @@ describe("Advanced Build advisor", () => {
 
     const findings = adviseSpec(spec);
 
-    expect(findings).toContainEqual(
-      expect.objectContaining({ ruleId: "remove-unused-tools" }),
-    );
+    expect(findings).toContainEqual(expect.objectContaining({ ruleId: "remove-unused-tools" }));
     expect(findings).toContainEqual(
       expect.objectContaining({
         ruleId: "persistent-unredacted-state",

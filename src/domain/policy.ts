@@ -23,8 +23,8 @@ export type SpecDecision = {
 };
 
 export function evaluateSpec(spec: AgentSpec): SpecDecision {
-  const issues: SpecIssue[] = analyzeRequirements(spec).gaps
-    .filter((gap) => gap.path.startsWith("decisions.unresolved."))
+  const issues: SpecIssue[] = analyzeRequirements(spec)
+    .gaps.filter((gap) => gap.path.startsWith("decisions.unresolved."))
     .map((gap) => ({
       code: "unresolved_decision",
       message: gap.question,

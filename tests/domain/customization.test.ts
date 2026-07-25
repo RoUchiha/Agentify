@@ -1,10 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { AgentSpecSchema } from "@/domain/agent-spec";
-import {
-  CUSTOMIZATION_DEFAULTS,
-  materializeCustomization,
-} from "@/domain/customization";
+import { CUSTOMIZATION_DEFAULTS, materializeCustomization } from "@/domain/customization";
 import { demoAgentSpec } from "@/domain/demo";
 
 describe("AgentSpec customization", () => {

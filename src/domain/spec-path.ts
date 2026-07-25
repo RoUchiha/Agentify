@@ -1,8 +1,4 @@
-import {
-  AgentSpecSchema,
-  type AgentSpec,
-  type AgentSpecParseResult,
-} from "@/domain/agent-spec";
+import { AgentSpecSchema, type AgentSpec, type AgentSpecParseResult } from "@/domain/agent-spec";
 
 export type SpecPatch = {
   path: string;
@@ -20,10 +16,7 @@ export function getSpecValue(spec: AgentSpec, path: string): unknown {
   return current;
 }
 
-export function applySpecPatches(
-  spec: AgentSpec,
-  patches: SpecPatch[],
-): AgentSpecParseResult {
+export function applySpecPatches(spec: AgentSpec, patches: SpecPatch[]): AgentSpecParseResult {
   const draft = structuredClone(spec) as unknown;
   try {
     for (const patch of patches) {
@@ -41,9 +34,7 @@ function parsePath(path: string): string[] {
   }
   const segments = path.split(".");
   if (
-    segments.some(
-      (segment) => !segment || FORBIDDEN_SEGMENTS.has(segment) || /\s/.test(segment),
-    )
+    segments.some((segment) => !segment || FORBIDDEN_SEGMENTS.has(segment) || /\s/.test(segment))
   ) {
     throw new Error("Invalid spec path.");
   }

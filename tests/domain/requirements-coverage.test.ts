@@ -48,10 +48,7 @@ describe("Quick Build requirement coverage", () => {
       runtime: { ...demoAgentSpec.runtime, deploymentMode: "cloud" },
       decisions: {
         ...demoAgentSpec.decisions,
-        unresolved: [
-          "Where should this agent run?",
-          "Authorize sending external messages?",
-        ],
+        unresolved: ["Where should this agent run?", "Authorize sending external messages?"],
       },
     });
     const coverage = analyzeRequirements(spec);

@@ -25,12 +25,7 @@ describe("AdvisorRail", () => {
   test("previews and explicitly applies an advisor patch", async () => {
     const onChange = vi.fn();
     render(
-      <AdvisorRail
-        findings={[finding]}
-        onChange={onChange}
-        onDismiss={vi.fn()}
-        spec={spec}
-      />,
+      <AdvisorRail findings={[finding]} onChange={onChange} onDismiss={vi.fn()} spec={spec} />,
     );
 
     await userEvent.click(screen.getByRole("button", { name: "Review change" }));
@@ -52,12 +47,7 @@ describe("AdvisorRail", () => {
     const onChange = vi.fn();
     const onDismiss = vi.fn();
     render(
-      <AdvisorRail
-        findings={[finding]}
-        onChange={onChange}
-        onDismiss={onDismiss}
-        spec={spec}
-      />,
+      <AdvisorRail findings={[finding]} onChange={onChange} onDismiss={onDismiss} spec={spec} />,
     );
 
     await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));

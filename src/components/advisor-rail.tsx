@@ -42,10 +42,7 @@ export function AdvisorRail({
       <header>
         <p className="eyebrow">Design advisor</p>
         <h2>Review before applying</h2>
-        <p>
-          Suggestions never change the accepted AgentSpec until you explicitly apply
-          them.
-        </p>
+        <p>Suggestions never change the accepted AgentSpec until you explicitly apply them.</p>
       </header>
       {SEVERITIES.map((severity) => {
         const group = findings.filter((finding) => finding.severity === severity.id);
@@ -124,8 +121,7 @@ function FindingCard({
             <div key={patch.path}>
               <code>{patch.path}</code>
               <span>
-                {formatValue(safeGetValue(spec, patch.path))} →{" "}
-                {formatValue(patch.value)}
+                {formatValue(safeGetValue(spec, patch.path))} → {formatValue(patch.value)}
               </span>
             </div>
           ))}
@@ -147,10 +143,7 @@ function FindingCard({
             Apply suggestion
           </button>
         )}
-        <button
-          onClick={() => onEditPaths?.(finding.paths)}
-          type="button"
-        >
+        <button onClick={() => onEditPaths?.(finding.paths)} type="button">
           Edit fields
         </button>
         <button onClick={() => onDismiss(finding.id)} type="button">

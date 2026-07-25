@@ -27,11 +27,7 @@ export function ConfigField({
     return (
       <label className="config-control">
         <span>{label}</span>
-        <select
-          aria-label={label}
-          onChange={(event) => onChange(event.target.value)}
-          value={value}
-        >
+        <select aria-label={label} onChange={(event) => onChange(event.target.value)} value={value}>
           {hint.enumValues.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -60,9 +56,7 @@ export function ConfigField({
         <span>{label}</span>
         <input
           aria-label={label}
-          onChange={(event) =>
-            onChange(event.target.value === "" ? 0 : Number(event.target.value))
-          }
+          onChange={(event) => onChange(event.target.value === "" ? 0 : Number(event.target.value))}
           type="number"
           value={value}
         />
@@ -165,11 +159,7 @@ function ArrayField({
       </legend>
       <div className="array-items">
         {value.map((item, index) => (
-          <fieldset
-            aria-label={`${label} item ${index + 1}`}
-            className="array-item"
-            key={index}
-          >
+          <fieldset aria-label={`${label} item ${index + 1}`} className="array-item" key={index}>
             <legend>Item {index + 1}</legend>
             <div className="array-toolbar">
               <button
@@ -206,9 +196,11 @@ function ArrayField({
             <ConfigField
               label={typeof item === "object" && item !== null ? `Item ${index + 1}` : "Value"}
               onChange={(nextItem) =>
-                onChange(value.map((candidate, candidateIndex) =>
-                  candidateIndex === index ? nextItem : candidate,
-                ))
+                onChange(
+                  value.map((candidate, candidateIndex) =>
+                    candidateIndex === index ? nextItem : candidate,
+                  ),
+                )
               }
               path={`${path}.${index}`}
               value={item}

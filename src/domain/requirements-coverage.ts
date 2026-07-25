@@ -1,11 +1,6 @@
 import { AgentSpecSchema, type AgentSpec } from "@/domain/agent-spec";
 
-export type RequirementImpact =
-  | "permission"
-  | "privacy"
-  | "cost"
-  | "portability"
-  | "deployment";
+export type RequirementImpact = "permission" | "privacy" | "cost" | "portability" | "deployment";
 
 export type GapOption = {
   id: string;
@@ -326,7 +321,8 @@ function gapForDecision(decision: string, path: string): RequirementGap {
       path,
       severity: "blocking",
       question: decision,
-      reason: "A CRM write changes external records and needs an explicit destination and authority.",
+      reason:
+        "A CRM write changes external records and needs an explicit destination and authority.",
       recommended: option(
         "read-only",
         "Start read-only without a CRM write",
@@ -428,11 +424,7 @@ function applyModelProfile(spec: AgentSpec, selected: GapOption): AgentSpec {
   };
 }
 
-function applyDeploymentMode(
-  spec: AgentSpec,
-  gap: RequirementGap,
-  selected: GapOption,
-): AgentSpec {
+function applyDeploymentMode(spec: AgentSpec, gap: RequirementGap, selected: GapOption): AgentSpec {
   const next = applyDecision(spec, gap, selected);
   return {
     ...next,
@@ -443,11 +435,7 @@ function applyDeploymentMode(
   };
 }
 
-function applyDecision(
-  spec: AgentSpec,
-  gap: RequirementGap,
-  selected: GapOption,
-): AgentSpec {
+function applyDecision(spec: AgentSpec, gap: RequirementGap, selected: GapOption): AgentSpec {
   const next = structuredClone(spec);
   next.decisions.unresolved = next.decisions.unresolved.filter(
     (decision) => decision !== gap.question,
@@ -459,11 +447,7 @@ function applyDecision(
   return next;
 }
 
-function applyWriteDecision(
-  spec: AgentSpec,
-  gap: RequirementGap,
-  selected: GapOption,
-): AgentSpec {
+function applyWriteDecision(spec: AgentSpec, gap: RequirementGap, selected: GapOption): AgentSpec {
   const toolId = gap.id.replace("write-authorization-", "");
   if (selected.id !== "runtime-approval") {
     const next = structuredClone(spec);
@@ -500,11 +484,7 @@ function applyRestrictedCloudDecision(spec: AgentSpec, selected: GapOption): Age
   return next;
 }
 
-function applyTargetDecision(
-  spec: AgentSpec,
-  gap: RequirementGap,
-  selected: GapOption,
-): AgentSpec {
+function applyTargetDecision(spec: AgentSpec, gap: RequirementGap, selected: GapOption): AgentSpec {
   const next = structuredClone(spec);
   if (!next.customization) throw new Error("Unsupported requirement answer.");
   const index = Number(gap.path.split(".")[2]);

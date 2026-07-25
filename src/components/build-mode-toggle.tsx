@@ -21,9 +21,7 @@ export function BuildModeToggle({
             value={value}
           />
           <span>{value === "quick" ? "Quick Build" : "Advanced Build"}</span>
-          <small>
-            {value === "quick" ? "Guided defaults" : "Every contract field"}
-          </small>
+          <small>{value === "quick" ? "Guided defaults" : "Every contract field"}</small>
         </label>
       ))}
     </fieldset>

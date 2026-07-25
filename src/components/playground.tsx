@@ -85,7 +85,11 @@ export function Playground({
             onClick={submit}
             type="button"
           >
-            {blockedReason ? "Resolve decisions before testing" : busy ? "Running test..." : "Run test"}
+            {blockedReason
+              ? "Resolve decisions before testing"
+              : busy
+                ? "Running test..."
+                : "Run test"}
           </button>
         </div>
         <div className="playground-results">

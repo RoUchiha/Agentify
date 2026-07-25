@@ -58,7 +58,8 @@ export const STUDIO_SECTIONS: StudioSection[] = [
   {
     id: "overview",
     label: "Overview",
-    description: "Identity, revision, confirmed decisions, assumptions, warnings, and open questions.",
+    description:
+      "Identity, revision, confirmed decisions, assumptions, warnings, and open questions.",
     roots: ["metadata", "decisions"],
   },
   {
@@ -82,25 +83,29 @@ export const STUDIO_SECTIONS: StudioSection[] = [
   {
     id: "tools",
     label: "Tools and permissions",
-    description: "Tool contracts, write authority, approvals, connections, retries, caching, and credentials.",
+    description:
+      "Tool contracts, write authority, approvals, connections, retries, caching, and credentials.",
     roots: ["tools", "customization.toolPolicies"],
   },
   {
     id: "knowledge",
     label: "Knowledge",
-    description: "Sources, classifications, retention, retrieval, freshness, citations, and failure policy.",
+    description:
+      "Sources, classifications, retention, retrieval, freshness, citations, and failure policy.",
     roots: ["knowledge", "customization.knowledgePolicies"],
   },
   {
     id: "state",
     label: "Memory and state",
-    description: "State schemas, visibility, persistence, redaction, initialization, writers, and conflicts.",
+    description:
+      "State schemas, visibility, persistence, redaction, initialization, writers, and conflicts.",
     roots: ["state", "customization.statePolicies"],
   },
   {
     id: "workflow",
     label: "Workflow",
-    description: "Topology, nodes, edges, routing conditions, retries, loops, checkpoints, and termination.",
+    description:
+      "Topology, nodes, edges, routing conditions, retries, loops, checkpoints, and termination.",
     roots: ["workflow", "customization.workflow"],
   },
   {
@@ -112,7 +117,8 @@ export const STUDIO_SECTIONS: StudioSection[] = [
   {
     id: "hooks",
     label: "Hooks and lifecycle",
-    description: "Lifecycle events, handler references, execution locations, timeouts, and failure behavior.",
+    description:
+      "Lifecycle events, handler references, execution locations, timeouts, and failure behavior.",
     roots: ["customization.hooks"],
   },
   {
@@ -124,7 +130,8 @@ export const STUDIO_SECTIONS: StudioSection[] = [
   {
     id: "runtime",
     label: "Runtime and sandbox",
-    description: "Artifact target, deployment boundary, network, filesystem, streaming, and persistence.",
+    description:
+      "Artifact target, deployment boundary, network, filesystem, streaming, and persistence.",
     roots: ["runtime", "customization.runtime"],
   },
   {
@@ -136,13 +143,15 @@ export const STUDIO_SECTIONS: StudioSection[] = [
   {
     id: "observability",
     label: "Observability",
-    description: "Traces, logs, metrics, content capture, sampling, redaction, retention, and exporters.",
+    description:
+      "Traces, logs, metrics, content capture, sampling, redaction, retention, and exporters.",
     roots: ["customization.observability"],
   },
   {
     id: "delivery",
     label: "Delivery and targets",
-    description: "Package identity and the spec, tests, CI, README, and environment artifacts to include.",
+    description:
+      "Package identity and the spec, tests, CI, README, and environment artifacts to include.",
     roots: ["customization.delivery"],
   },
   {
@@ -163,22 +172,8 @@ export const STUDIO_SECTIONS: StudioSection[] = [
 const ENUM_HINTS: Record<string, readonly string[]> = {
   "metadata.version": ["1.0", "1.1"],
   "models.mode": ["free-auto", "fixed", "adaptive"],
-  "models.allowedProviders.[]": [
-    "free-auto",
-    "ollama",
-    "groq",
-    "openai",
-    "anthropic",
-    "google",
-  ],
-  "models.preferredProvider": [
-    "free-auto",
-    "ollama",
-    "groq",
-    "openai",
-    "anthropic",
-    "google",
-  ],
+  "models.allowedProviders.[]": ["free-auto", "ollama", "groq", "openai", "anthropic", "google"],
+  "models.preferredProvider": ["free-auto", "ollama", "groq", "openai", "anthropic", "google"],
   "models.requirements.[]": ["structured-output", "tool-use", "vision", "long-context"],
   "models.fallback": ["ask", "compatible-provider", "none"],
   "tools.[].mode": ["read", "write"],
@@ -201,12 +196,7 @@ const ENUM_HINTS: Record<string, readonly string[]> = {
     "subflow",
     "termination",
   ],
-  "runtime.target": [
-    "openai-agents-ts",
-    "openai-agents-python",
-    "mcp-server",
-    "portable-spec",
-  ],
+  "runtime.target": ["openai-agents-ts", "openai-agents-python", "mcp-server", "portable-spec"],
   "runtime.deploymentMode": ["hybrid", "local", "cloud"],
   "evaluations.[].kind": ["positive", "negative", "boundary", "policy", "adversarial"],
   "evaluations.[].provenance": [
@@ -402,9 +392,7 @@ const ARRAY_TEMPLATES: Record<string, ArrayTemplate[]> = {
       },
     },
   ],
-  "workflow.nodes": [
-    { label: "Add transform node", value: { id: "new-node", type: "transform" } },
-  ],
+  "workflow.nodes": [{ label: "Add transform node", value: { id: "new-node", type: "transform" } }],
   "workflow.edges": [
     { label: "Add edge", value: { source: "source-node", target: "target-node" } },
   ],
@@ -485,9 +473,7 @@ const ARRAY_TEMPLATES: Record<string, ArrayTemplate[]> = {
       },
     },
   ],
-  "customization.statePolicies.[].mutableBy": [
-    { label: "Add mutable agent", value: "agent-id" },
-  ],
+  "customization.statePolicies.[].mutableBy": [{ label: "Add mutable agent", value: "agent-id" }],
   "customization.workflow.nodePolicies": [
     {
       label: "Add node policy",
@@ -607,7 +593,5 @@ const OPTIONAL_FIELD_TEMPLATES: Record<string, OptionalFieldTemplate[]> = {
   "customization.workflow.nodePolicies.[]": [
     { key: "failureTarget", label: "Failure target", value: "node-id" },
   ],
-  "customization.delivery": [
-    { key: "packageName", label: "Package name", value: "agent-package" },
-  ],
+  "customization.delivery": [{ key: "packageName", label: "Package name", value: "agent-package" }],
 };

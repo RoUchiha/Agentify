@@ -38,9 +38,7 @@ describe("SpecEditor", () => {
   });
 
   test("synchronizes the raw editor when another Advanced control accepts a spec", () => {
-    const { rerender } = render(
-      <SpecEditor onChange={vi.fn()} spec={demoAgentSpec} />,
-    );
+    const { rerender } = render(<SpecEditor onChange={vi.fn()} spec={demoAgentSpec} />);
     const edited = {
       ...demoAgentSpec,
       metadata: { ...demoAgentSpec.metadata, name: "Synchronized agent" },

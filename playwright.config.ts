@@ -45,6 +45,7 @@ export default defineConfig({
 function resolveHarnessBuilder(): string {
   const candidates = [
     process.env.HARNESS_BUILDER_CWD,
+    path.resolve(__dirname, "../../../HarnessBuilder/.worktrees/agentify-full-customization"),
     path.resolve(__dirname, "../../../HarnessBuilder/.worktrees/agent-spec-build-api"),
     path.resolve(__dirname, "../HarnessBuilder"),
     path.resolve(__dirname, "HarnessBuilder"),

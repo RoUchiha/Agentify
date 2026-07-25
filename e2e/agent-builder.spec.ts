@@ -31,13 +31,85 @@ test("one prompt advances through the visible design, test, build, and delivery 
   );
   await expect(page.getByRole("button", { name: /download verified zip/i })).toBeEnabled();
 
-  await page.getByRole("switch", { name: /advanced/i }).click();
+  await page.getByRole("radio", { name: "Advanced Build" }).click();
   await expect(page.getByRole("region", { name: /agent canvas/i })).toBeVisible();
+  await page.getByRole("button", { name: "Raw AgentSpec" }).click();
   await expect(page.getByRole("textbox", { name: /agent spec/i })).toContainText(
-    '"version": "1.0"',
+    '"version": "1.1"',
   );
   expect(consoleErrors).toEqual([]);
 });
+
+test("Quick Build resolves a missing integration decision with the safe suggestion", async ({
+  page,
+}) => {
+  await installSuccessfulPipeline(page, {
+    ...demoAgentSpec,
+    decisions: {
+      ...demoAgentSpec.decisions,
+      unresolved: ["Which CRM should receive updates?"],
+    },
+  });
+  await page.goto("/");
+  await submitPrompt(page);
+
+  await expect(
+    page.getByRole("heading", { name: "Which CRM should receive updates?" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: /choose start read-only without a crm write/i,
+    })
+    .click();
+
+  await expect(page.getByRole("status").first()).toContainText("Verified package ready");
+});
+
+test("Advanced Build applies structured configuration and explicit advice", async ({ page }) => {
+  await installSuccessfulPipeline(page);
+  await page.goto("/");
+  await submitPrompt(page);
+  await expect(page.getByRole("status").first()).toContainText("Verified package ready");
+
+  await page.getByRole("radio", { name: "Advanced Build" }).click();
+  await page.getByRole("button", { name: "Observability" }).click();
+  await page.getByLabel("Trace level").selectOption("errors");
+  await page.getByRole("button", { name: "Apply section" }).click();
+
+  const advisor = page.getByRole("complementary", {
+    name: "Agent design advisor",
+  });
+  await expect(advisor).toBeVisible();
+  await advisor.getByRole("button", { name: "Review change" }).first().click();
+  await advisor.getByRole("button", { name: "Apply suggestion" }).first().click();
+  await page.getByRole("button", { name: "Raw AgentSpec" }).click();
+
+  const raw = page.getByRole("textbox", { name: "Agent spec" });
+  await expect(raw).toContainText('"traceLevel": "errors"');
+  await expect(raw).toContainText('"kind": "boundary"');
+});
+
+for (const viewport of [
+  { width: 1440, height: 1100 },
+  { width: 1024, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`Quick and Advanced remain usable at ${viewport.width}x${viewport.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await installSuccessfulPipeline(page);
+    await page.goto("/");
+    await submitPrompt(page);
+    await page.getByRole("radio", { name: "Advanced Build" }).click();
+
+    await expect(page.getByRole("region", { name: /agent canvas/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Raw AgentSpec" })).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+    ).toBe(true);
+  });
+}
 
 test("the home page declares a reachable application icon", async ({ page }) => {
   await page.goto("/");
@@ -76,14 +148,17 @@ test("the Agentify server reaches the real HarnessBuilder build endpoint", async
   expect(body.artifact.files.length).toBeGreaterThan(10);
 });
 
-async function installSuccessfulPipeline(page: import("@playwright/test").Page) {
+async function installSuccessfulPipeline(
+  page: import("@playwright/test").Page,
+  spec: typeof demoAgentSpec | Record<string, unknown> = demoAgentSpec,
+) {
   await page.route("**/api/plan", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         status: "ready",
-        spec: demoAgentSpec,
+        spec,
         provider: { id: "groq", dataBoundary: "cloud", reason: "Groq Free Cloud selected." },
       }),
     }),
@@ -128,6 +203,13 @@ async function installSuccessfulPipeline(page: import("@playwright/test").Page) 
       body: JSON.stringify(packagedBuild()),
     }),
   );
+}
+
+async function submitPrompt(page: import("@playwright/test").Page) {
+  await page
+    .getByLabel(/what should your agent accomplish/i)
+    .fill("Build an agent that triages support tickets and recommends safe actions.");
+  await page.getByRole("button", { name: /design my agent/i }).click();
 }
 
 function packagedBuild() {

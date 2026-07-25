@@ -17,13 +17,7 @@ describe("QuickFollowups", () => {
       },
     });
 
-    render(
-      <QuickFollowups
-        coverage={analyzeRequirements(spec)}
-        onChange={vi.fn()}
-        spec={spec}
-      />,
-    );
+    render(<QuickFollowups coverage={analyzeRequirements(spec)} onChange={vi.fn()} spec={spec} />);
 
     expect(screen.getByText("decisions.unresolved.0")).toBeInTheDocument();
     expect(
@@ -45,13 +39,7 @@ describe("QuickFollowups", () => {
       },
     });
 
-    render(
-      <QuickFollowups
-        coverage={analyzeRequirements(spec)}
-        onChange={onChange}
-        spec={spec}
-      />,
-    );
+    render(<QuickFollowups coverage={analyzeRequirements(spec)} onChange={onChange} spec={spec} />);
     await userEvent.click(
       screen.getByRole("button", { name: /start read-only without a crm write/i }),
     );
@@ -74,20 +62,11 @@ describe("QuickFollowups", () => {
       },
       decisions: {
         ...demoAgentSpec.decisions,
-        unresolved: [
-          "Where should this agent run?",
-          "Authorize sending external messages?",
-        ],
+        unresolved: ["Where should this agent run?", "Authorize sending external messages?"],
       },
     });
 
-    render(
-      <QuickFollowups
-        coverage={analyzeRequirements(spec)}
-        onChange={onChange}
-        spec={spec}
-      />,
-    );
+    render(<QuickFollowups coverage={analyzeRequirements(spec)} onChange={onChange} spec={spec} />);
     await userEvent.click(screen.getByRole("button", { name: "Use all safe defaults" }));
 
     expect(onChange).toHaveBeenCalledWith(

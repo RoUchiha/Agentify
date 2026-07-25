@@ -438,9 +438,7 @@ h3 {
   display: grid;
   gap: 1rem;
   border-color: #476c5d;
-  background:
-    linear-gradient(135deg, rgb(117 239 181 / 7%), transparent 48%),
-    rgb(11 25 20 / 94%);
+  background: linear-gradient(135deg, rgb(117 239 181 / 7%), transparent 48%), rgb(11 25 20 / 94%);
 }
 
 .quick-followups .panel-heading {

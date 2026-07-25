@@ -29,12 +29,7 @@ const REQUIRED_SECTIONS = [
 
 describe("AdvancedStudio", () => {
   test.each(REQUIRED_SECTIONS)("exposes the %s section", (name) => {
-    render(
-      <AdvancedStudio
-        onChange={vi.fn()}
-        spec={materializeCustomization(demoAgentSpec)}
-      />,
-    );
+    render(<AdvancedStudio onChange={vi.fn()} spec={materializeCustomization(demoAgentSpec)} />);
 
     expect(screen.getByRole("button", { name })).toBeVisible();
   });
@@ -72,12 +67,7 @@ describe("AdvancedStudio", () => {
 
   test("edits scalar and enum values only after applying the section", async () => {
     const onChange = vi.fn();
-    render(
-      <AdvancedStudio
-        onChange={onChange}
-        spec={materializeCustomization(demoAgentSpec)}
-      />,
-    );
+    render(<AdvancedStudio onChange={onChange} spec={materializeCustomization(demoAgentSpec)} />);
 
     await userEvent.click(screen.getByRole("button", { name: "Budgets and reliability" }));
     const maxTokens = screen.getByLabelText("Maximum tokens");
@@ -103,12 +93,7 @@ describe("AdvancedStudio", () => {
 
   test("duplicates, reorders, and deletes array entries in a section draft", async () => {
     const onChange = vi.fn();
-    render(
-      <AdvancedStudio
-        onChange={onChange}
-        spec={materializeCustomization(demoAgentSpec)}
-      />,
-    );
+    render(<AdvancedStudio onChange={onChange} spec={materializeCustomization(demoAgentSpec)} />);
     await userEvent.click(screen.getByRole("button", { name: "Tools and permissions" }));
 
     const tool = screen.getByRole("group", { name: "Tools item 1" });
@@ -133,12 +118,7 @@ describe("AdvancedStudio", () => {
 
   test("shows path-specific validation and preserves the last accepted spec", async () => {
     const onChange = vi.fn();
-    render(
-      <AdvancedStudio
-        onChange={onChange}
-        spec={materializeCustomization(demoAgentSpec)}
-      />,
-    );
+    render(<AdvancedStudio onChange={onChange} spec={materializeCustomization(demoAgentSpec)} />);
     await userEvent.click(screen.getByRole("button", { name: "Budgets and reliability" }));
     await userEvent.clear(screen.getByLabelText("Maximum tokens"));
     await userEvent.type(screen.getByLabelText("Maximum tokens"), "-1");
@@ -149,12 +129,7 @@ describe("AdvancedStudio", () => {
   });
 
   test("can add optional contract fields that are absent from the accepted spec", async () => {
-    render(
-      <AdvancedStudio
-        onChange={vi.fn()}
-        spec={materializeCustomization(demoAgentSpec)}
-      />,
-    );
+    render(<AdvancedStudio onChange={vi.fn()} spec={materializeCustomization(demoAgentSpec)} />);
     await userEvent.click(screen.getByRole("button", { name: "Models and providers" }));
     await userEvent.click(screen.getByRole("button", { name: "+ Add model profile" }));
     const profile = screen.getByRole("group", { name: /model profiles item 1/i });
@@ -165,12 +140,7 @@ describe("AdvancedStudio", () => {
   });
 
   test("keeps the raw AgentSpec editor available", async () => {
-    render(
-      <AdvancedStudio
-        onChange={vi.fn()}
-        spec={materializeCustomization(demoAgentSpec)}
-      />,
-    );
+    render(<AdvancedStudio onChange={vi.fn()} spec={materializeCustomization(demoAgentSpec)} />);
     await userEvent.click(screen.getByRole("button", { name: "Raw AgentSpec" }));
 
     expect(screen.getByRole("textbox", { name: "Agent spec" })).toBeVisible();

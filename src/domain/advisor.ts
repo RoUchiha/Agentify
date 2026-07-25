@@ -96,7 +96,9 @@ function redundantTeamRule(spec: AgentSpec): AdvisoryFinding[] {
 function unboundedHandoffCycleRule(spec: AgentSpec): AdvisoryFinding[] {
   const cycles = spec.agents.flatMap((agent) =>
     agent.handoffs
-      .filter((target) => spec.agents.find((candidate) => candidate.id === target)?.handoffs.includes(agent.id))
+      .filter((target) =>
+        spec.agents.find((candidate) => candidate.id === target)?.handoffs.includes(agent.id),
+      )
       .map((target) => [agent.id, target].sort().join(" <-> ")),
   );
   const uniqueCycles = unique(cycles);
@@ -142,7 +144,8 @@ function unusedToolRule(spec: AgentSpec): AdvisoryFinding[] {
       severity: "optional",
       category: "clarity",
       title: "Remove tools no agent can call",
-      explanation: "Unused tool declarations increase the permission surface and generated package size.",
+      explanation:
+        "Unused tool declarations increase the permission surface and generated package size.",
       evidence: unused.map((tool) => `Unused tool: ${tool.id} (${tool.mode}, ${tool.risk}).`),
       patches,
       impacts: ["Smaller permission surface", "Clearer generated code"],
@@ -165,7 +168,8 @@ function writeApprovalRule(spec: AgentSpec): AdvisoryFinding[] {
       severity: "blocking",
       category: "safety",
       title: "Confirm high-risk write authority",
-      explanation: "High-risk mutations require an explicit developer decision and runtime approval.",
+      explanation:
+        "High-risk mutations require an explicit developer decision and runtime approval.",
       evidence: unconfirmed.map((tool) => `${tool.name} is a ${tool.risk}-risk write tool.`),
       patches: [],
       impacts: ["External side effects", "Operator approval"],
@@ -206,9 +210,7 @@ function inconsistentBudgetsRule(spec: AgentSpec): AdvisoryFinding[] {
         `Workflow limit: ${spec.workflow.termination.maxSteps}.`,
         `Budget limit: ${spec.budgets.maxSteps}.`,
       ],
-      patches: [
-        { path: "workflow.termination.maxSteps", value: spec.budgets.maxSteps },
-      ],
+      patches: [{ path: "workflow.termination.maxSteps", value: spec.budgets.maxSteps }],
       impacts: ["Deterministic termination"],
     }),
   ];
@@ -254,7 +256,8 @@ function restrictedCloudRule(spec: AgentSpec): AdvisoryFinding[] {
       severity: "blocking",
       category: "safety",
       title: "Keep restricted data inside an approved boundary",
-      explanation: "Cloud execution moves restricted knowledge outside the default local trust boundary.",
+      explanation:
+        "Cloud execution moves restricted knowledge outside the default local trust boundary.",
       evidence: restricted.map((source) => `Restricted source: ${source.id}.`),
       patches: [{ path: "runtime.deploymentMode", value: "hybrid" }],
       impacts: ["Data residency", "Deployment architecture"],
@@ -276,7 +279,8 @@ function persistentUnredactedStateRule(spec: AgentSpec): AdvisoryFinding[] {
       severity: "blocking",
       category: "safety",
       title: "Redact state before project persistence",
-      explanation: "Long-lived unredacted state can retain sensitive content beyond the current run.",
+      explanation:
+        "Long-lived unredacted state can retain sensitive content beyond the current run.",
       evidence: exposed.map((entry) => `Unredacted persistent state: ${entry.key}.`),
       patches: [
         {
@@ -360,8 +364,7 @@ function incompatibleOverrideRule(spec: AgentSpec): AdvisoryFinding[] {
 
 function confidentialContentTracingRule(spec: AgentSpec): AdvisoryFinding[] {
   const sensitive = spec.knowledge.filter(
-    (source) =>
-      source.classification === "confidential" || source.classification === "restricted",
+    (source) => source.classification === "confidential" || source.classification === "restricted",
   );
   const observability = spec.customization?.observability;
   if (!observability?.contentCapture || observability.redactSensitive || sensitive.length === 0) {
@@ -374,7 +377,8 @@ function confidentialContentTracingRule(spec: AgentSpec): AdvisoryFinding[] {
       severity: "blocking",
       category: "safety",
       title: "Do not capture unredacted sensitive content",
-      explanation: "Content tracing would export confidential or restricted values without redaction.",
+      explanation:
+        "Content tracing would export confidential or restricted values without redaction.",
       evidence: sensitive.map((source) => `${source.classification} source: ${source.id}.`),
       patches: [
         { path: "customization.observability.contentCapture", value: false },

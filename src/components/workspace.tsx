@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 
-import {
-  BuildModeToggle,
-  type BuildMode,
-} from "@/components/build-mode-toggle";
+import { BuildModeToggle, type BuildMode } from "@/components/build-mode-toggle";
 import { AdvancedStudio } from "@/components/advanced-studio";
 import { DesignSummary } from "@/components/design-summary";
 import { ArtifactDelivery } from "@/components/artifact-delivery";
@@ -60,9 +57,7 @@ export function Workspace(props: WorkspaceProps) {
   >();
   const [issue, setIssue] = useState<string>();
   const [mode, setMode] = useState<BuildMode>("quick");
-  const [dismissedFindingIds, setDismissedFindingIds] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [dismissedFindingIds, setDismissedFindingIds] = useState<Set<string>>(() => new Set());
   const [tested, setTested] = useState(false);
   const [buildResult, setBuildResult] = useState<BuildResult>();
   const [building, setBuilding] = useState(false);
@@ -70,8 +65,7 @@ export function Workspace(props: WorkspaceProps) {
   const [playgroundResult, setPlaygroundResult] = useState<PlaygroundRun>();
   const coverage = spec ? analyzeRequirements(spec) : undefined;
   const findings = spec ? adviseSpec(spec, dismissedFindingIds) : [];
-  const blockingGapCount =
-    coverage?.gaps.filter((gap) => gap.severity === "blocking").length ?? 0;
+  const blockingGapCount = coverage?.gaps.filter((gap) => gap.severity === "blocking").length ?? 0;
   const blockedReason =
     blockingGapCount > 0
       ? `Resolve ${blockingGapCount} required decision${blockingGapCount === 1 ? "" : "s"}`
