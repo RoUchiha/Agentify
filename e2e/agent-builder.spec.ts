@@ -39,6 +39,18 @@ test("one prompt advances through the visible design, test, build, and delivery 
   expect(consoleErrors).toEqual([]);
 });
 
+test("the home page declares a reachable application icon", async ({ page }) => {
+  await page.goto("/");
+
+  const iconHref = await page.locator('link[rel~="icon"]').first().getAttribute("href");
+  expect(iconHref).toBeTruthy();
+  const status = await page.evaluate(
+    async (href) => (await fetch(href, { cache: "no-store" })).status,
+    iconHref!,
+  );
+  expect(status).toBe(200);
+});
+
 test("the Agentify server reaches the real HarnessBuilder build endpoint", async ({ request }) => {
   const response = await request.post("/api/build", {
     data: {
