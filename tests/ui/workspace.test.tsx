@@ -49,6 +49,7 @@ describe("Workspace", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: /design my agent/i }));
     await userEvent.click(screen.getByRole("radio", { name: "Advanced Build" }));
+    await userEvent.click(screen.getByRole("button", { name: "Raw AgentSpec" }));
 
     expect(screen.getByRole("region", { name: /agent canvas/i })).toBeInTheDocument();
     expect(
@@ -72,6 +73,7 @@ describe("Workspace", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: /design my agent/i }));
     await userEvent.click(screen.getByRole("radio", { name: "Advanced Build" }));
+    await userEvent.click(screen.getByRole("button", { name: "Raw AgentSpec" }));
 
     const editor = screen.getByRole("textbox", { name: /agent spec/i });
     const parsed = JSON.parse((editor as HTMLTextAreaElement).value);
@@ -81,6 +83,7 @@ describe("Workspace", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Quick Build" }));
     expect(screen.queryByRole("textbox", { name: /agent spec/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: "Advanced Build" }));
+    await userEvent.click(screen.getByRole("button", { name: "Raw AgentSpec" }));
 
     expect(
       (screen.getByRole("textbox", { name: /agent spec/i }) as HTMLTextAreaElement).value,

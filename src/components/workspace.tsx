@@ -6,6 +6,7 @@ import {
   BuildModeToggle,
   type BuildMode,
 } from "@/components/build-mode-toggle";
+import { AdvancedStudio } from "@/components/advanced-studio";
 import { DesignSummary } from "@/components/design-summary";
 import { ArtifactDelivery } from "@/components/artifact-delivery";
 import { ProgressRail } from "@/components/progress-rail";
@@ -13,7 +14,6 @@ import { Playground, runPlaygroundFromApi, type PlaygroundRunner } from "@/compo
 import { PromptIntake } from "@/components/prompt-intake";
 import { ProviderStatus } from "@/components/provider-status";
 import { QuickFollowups } from "@/components/quick-followups";
-import { SpecEditor } from "@/components/spec-editor";
 import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
 import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder";
@@ -242,7 +242,10 @@ export function Workspace(props: WorkspaceProps) {
               {mode === "advanced" && (
                 <div className="advanced-grid">
                   <VisualCanvas graph={toVisualGraph(spec)} />
-                  <SpecEditor onChange={(nextSpec) => acceptSpec(nextSpec)} spec={spec} />
+                  <AdvancedStudio
+                    onChange={(nextSpec) => acceptSpec(nextSpec)}
+                    spec={spec}
+                  />
                 </div>
               )}
               <Playground
