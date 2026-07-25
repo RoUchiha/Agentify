@@ -434,6 +434,124 @@ h3 {
   font-size: 0.9rem;
 }
 
+.quick-followups {
+  display: grid;
+  gap: 1rem;
+  border-color: #476c5d;
+  background:
+    linear-gradient(135deg, rgb(117 239 181 / 7%), transparent 48%),
+    rgb(11 25 20 / 94%);
+}
+
+.quick-followups .panel-heading {
+  align-items: center;
+}
+
+.quick-followups .panel-heading code {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #385247;
+  border-radius: 0.5rem;
+  color: #91f2c2;
+  background: #08130f;
+  font-size: 0.7rem;
+}
+
+.followup-reason,
+.safe-default-note {
+  margin: 0;
+  color: #9aafa5;
+  line-height: 1.55;
+}
+
+.impact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.impact-row span {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #46584f;
+  border-radius: 999px;
+  color: #c7d5ce;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.followup-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 0.25fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #304a3f;
+  border-radius: 0.9rem;
+  background: #091510;
+}
+
+.followup-option.recommended {
+  border-color: #4bad7e;
+  background: #10251c;
+}
+
+.followup-option span,
+.followup-alternatives > p {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #75efb5;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.followup-option strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.followup-option p {
+  margin: 0;
+  color: #8fa49a;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.followup-option .primary-action {
+  min-height: 2.8rem;
+}
+
+.followup-alternatives {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.followup-alternatives > p {
+  margin: 0.35rem 0 0;
+  color: #8da199;
+}
+
+.safe-defaults-action {
+  justify-self: start;
+}
+
+.safe-default-note {
+  font-size: 0.72rem;
+}
+
+.quick-complete {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.quick-complete > p {
+  margin: 0;
+  color: #91f2c2;
+  font-weight: 800;
+}
+
 .error-banner {
   margin-bottom: 1rem;
   padding: 1rem;
@@ -762,6 +880,11 @@ h3 {
   }
 
   .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .followup-option,
+  .quick-complete {
     grid-template-columns: 1fr;
   }
 }

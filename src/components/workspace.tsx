@@ -12,6 +12,7 @@ import { ProgressRail } from "@/components/progress-rail";
 import { Playground, runPlaygroundFromApi, type PlaygroundRunner } from "@/components/playground";
 import { PromptIntake } from "@/components/prompt-intake";
 import { ProviderStatus } from "@/components/provider-status";
+import { QuickFollowups } from "@/components/quick-followups";
 import { SpecEditor } from "@/components/spec-editor";
 import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
@@ -19,6 +20,7 @@ import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder"
 import { materializeCustomization } from "@/domain/customization";
 import { toVisualGraph } from "@/domain/graph";
 import { evaluateSpec } from "@/domain/policy";
+import { analyzeRequirements } from "@/domain/requirements-coverage";
 import type { PlanAgentResult } from "@/server/planner";
 import type { PlaygroundRun } from "@/server/playground";
 
@@ -62,6 +64,13 @@ export function Workspace(props: WorkspaceProps) {
   const [building, setBuilding] = useState(false);
   const [buildIssue, setBuildIssue] = useState<string>();
   const [playgroundResult, setPlaygroundResult] = useState<PlaygroundRun>();
+  const coverage = spec ? analyzeRequirements(spec) : undefined;
+  const blockingGapCount =
+    coverage?.gaps.filter((gap) => gap.severity === "blocking").length ?? 0;
+  const blockedReason =
+    blockingGapCount > 0
+      ? `Resolve ${blockingGapCount} required decision${blockingGapCount === 1 ? "" : "s"}`
+      : undefined;
 
   async function design(request: { prompt: string; deploymentMode: DeploymentMode }) {
     setStatus("planning");
@@ -73,11 +82,12 @@ export function Workspace(props: WorkspaceProps) {
         setSpec(acceptedSpec);
         setProvider(result.provider);
         const decision = evaluateSpec(acceptedSpec);
-        setStatus(decision.status);
+        const nextCoverage = analyzeRequirements(acceptedSpec);
+        setStatus(nextCoverage.complete ? decision.status : "needs_attention");
         setTested(false);
         setBuildResult(undefined);
         setPlaygroundResult(undefined);
-        if (autoContinue && decision.status === "ready") {
+        if (autoContinue && nextCoverage.complete && decision.status === "ready") {
           await runAutomaticPipeline(acceptedSpec);
         }
         return;
@@ -136,6 +146,11 @@ export function Workspace(props: WorkspaceProps) {
     if (!spec) {
       return;
     }
+    if (!analyzeRequirements(spec).complete) {
+      setBuildIssue("Resolve the required Quick Build decisions before packaging.");
+      setStatus("needs_attention");
+      return;
+    }
     setBuilding(true);
     setStatus("building");
     setBuildIssue(undefined);
@@ -152,6 +167,20 @@ export function Workspace(props: WorkspaceProps) {
       setStatus("failed");
     } finally {
       setBuilding(false);
+    }
+  }
+
+  function acceptSpec(nextSpec: AgentSpec, automatic = false) {
+    const nextCoverage = analyzeRequirements(nextSpec);
+    const decision = evaluateSpec(nextSpec);
+    setSpec(nextSpec);
+    setStatus(nextCoverage.complete ? decision.status : "needs_attention");
+    setTested(false);
+    setBuildResult(undefined);
+    setBuildIssue(undefined);
+    setPlaygroundResult(undefined);
+    if (automatic && autoContinue && nextCoverage.complete && decision.status === "ready") {
+      void runAutomaticPipeline(nextSpec);
     }
   }
 
@@ -203,13 +232,21 @@ export function Workspace(props: WorkspaceProps) {
           {spec ? (
             <>
               <DesignSummary spec={spec} />
+              {mode === "quick" && coverage && (
+                <QuickFollowups
+                  coverage={coverage}
+                  onChange={(nextSpec) => acceptSpec(nextSpec, true)}
+                  spec={spec}
+                />
+              )}
               {mode === "advanced" && (
                 <div className="advanced-grid">
                   <VisualCanvas graph={toVisualGraph(spec)} />
-                  <SpecEditor onChange={setSpec} spec={spec} />
+                  <SpecEditor onChange={(nextSpec) => acceptSpec(nextSpec)} spec={spec} />
                 </div>
               )}
               <Playground
+                blockedReason={blockedReason}
                 onRunComplete={(result) => {
                   setTested(true);
                   setPlaygroundResult(result);
@@ -219,6 +256,7 @@ export function Workspace(props: WorkspaceProps) {
                 spec={spec}
               />
               <ArtifactDelivery
+                blockedReason={blockedReason}
                 building={building}
                 issue={buildIssue}
                 onBuild={build}
