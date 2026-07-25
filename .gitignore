@@ -1,0 +1,11 @@
+node_modules/
+.next/
+coverage/
+.worktrees/
+.superpowers/
+.env
+.env.local
+*.tsbuildinfo
+.vercel/
+playwright-report/
+test-results/
