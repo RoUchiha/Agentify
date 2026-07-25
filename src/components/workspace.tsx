@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+import {
+  BuildModeToggle,
+  type BuildMode,
+} from "@/components/build-mode-toggle";
 import { DesignSummary } from "@/components/design-summary";
 import { ArtifactDelivery } from "@/components/artifact-delivery";
 import { ProgressRail } from "@/components/progress-rail";
@@ -12,6 +16,7 @@ import { SpecEditor } from "@/components/spec-editor";
 import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
 import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder";
+import { materializeCustomization } from "@/domain/customization";
 import { toVisualGraph } from "@/domain/graph";
 import { evaluateSpec } from "@/domain/policy";
 import type { PlanAgentResult } from "@/server/planner";
@@ -51,7 +56,7 @@ export function Workspace(props: WorkspaceProps) {
     { id: "ollama" | "groq"; dataBoundary: "local" | "cloud"; reason: string } | undefined
   >();
   const [issue, setIssue] = useState<string>();
-  const [advanced, setAdvanced] = useState(false);
+  const [mode, setMode] = useState<BuildMode>("quick");
   const [tested, setTested] = useState(false);
   const [buildResult, setBuildResult] = useState<BuildResult>();
   const [building, setBuilding] = useState(false);
@@ -64,15 +69,16 @@ export function Workspace(props: WorkspaceProps) {
     try {
       const result = await planner(request);
       if (result.status === "ready") {
-        setSpec(result.spec);
+        const acceptedSpec = materializeCustomization(result.spec);
+        setSpec(acceptedSpec);
         setProvider(result.provider);
-        const decision = evaluateSpec(result.spec);
+        const decision = evaluateSpec(acceptedSpec);
         setStatus(decision.status);
         setTested(false);
         setBuildResult(undefined);
         setPlaygroundResult(undefined);
         if (autoContinue && decision.status === "ready") {
-          await runAutomaticPipeline(result.spec);
+          await runAutomaticPipeline(acceptedSpec);
         }
         return;
       }
@@ -161,17 +167,7 @@ export function Workspace(props: WorkspaceProps) {
           </p>
         </div>
         <div className="header-controls">
-          <label className="advanced-toggle">
-            <span>Advanced</span>
-            <input
-              aria-label="Advanced"
-              aria-checked={advanced}
-              checked={advanced}
-              onChange={(event) => setAdvanced(event.target.checked)}
-              role="switch"
-              type="checkbox"
-            />
-          </label>
+          <BuildModeToggle mode={mode} onChange={setMode} />
           <span className={`run-state ${status}`} role="status">
             {statusLabel(status)}
           </span>
@@ -207,7 +203,7 @@ export function Workspace(props: WorkspaceProps) {
           {spec ? (
             <>
               <DesignSummary spec={spec} />
-              {advanced && (
+              {mode === "advanced" && (
                 <div className="advanced-grid">
                   <VisualCanvas graph={toVisualGraph(spec)} />
                   <SpecEditor onChange={setSpec} spec={spec} />
