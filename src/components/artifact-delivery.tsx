@@ -31,8 +31,8 @@ export function ArtifactDelivery({
       {!result ? (
         <div className="delivery-empty">
           <p>
-            Send the immutable AgentSpec to HarnessBuilder for deterministic generation and
-            blocking verification gates.
+            Send the immutable AgentSpec to HarnessBuilder for deterministic generation and blocking
+            verification gates.
           </p>
           <button className="primary-action" disabled={building} onClick={onBuild} type="button">
             {building ? "Building..." : "Build verified agent"}

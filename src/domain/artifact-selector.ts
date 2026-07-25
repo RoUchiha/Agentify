@@ -14,10 +14,7 @@ export type ArtifactSelection =
       reason: string;
     };
 
-export function selectArtifact(
-  spec: AgentSpec,
-  override?: ArtifactTarget,
-): ArtifactSelection {
+export function selectArtifact(spec: AgentSpec, override?: ArtifactTarget): ArtifactSelection {
   const target = override ?? spec.runtime.target;
   if (target === "mcp-server" && spec.tools.length === 0) {
     return {

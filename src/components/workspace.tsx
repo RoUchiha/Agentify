@@ -5,7 +5,7 @@ import { useState } from "react";
 import { DesignSummary } from "@/components/design-summary";
 import { ArtifactDelivery } from "@/components/artifact-delivery";
 import { ProgressRail } from "@/components/progress-rail";
-import { Playground, type PlaygroundRunner } from "@/components/playground";
+import { Playground, runPlaygroundFromApi, type PlaygroundRunner } from "@/components/playground";
 import { PromptIntake } from "@/components/prompt-intake";
 import { ProviderStatus } from "@/components/provider-status";
 import { SpecEditor } from "@/components/spec-editor";
@@ -13,7 +13,9 @@ import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
 import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder";
 import { toVisualGraph } from "@/domain/graph";
+import { evaluateSpec } from "@/domain/policy";
 import type { PlanAgentResult } from "@/server/planner";
+import type { PlaygroundRun } from "@/server/playground";
 
 export type Planner = (request: {
   prompt: string;
@@ -21,17 +23,28 @@ export type Planner = (request: {
 }) => Promise<PlanAgentResult>;
 export type BuildRunner = (request: BuildAgentInput) => Promise<BuildResult>;
 
-type WorkspaceStatus = "draft" | "planning" | "needs_attention" | "ready" | "failed";
+type WorkspaceStatus =
+  | "draft"
+  | "planning"
+  | "needs_attention"
+  | "ready"
+  | "testing"
+  | "building"
+  | "packaged"
+  | "failed";
 
-export function Workspace({
-  planner = planFromApi,
-  playgroundRunner,
-  buildRunner = buildFromApi,
-}: {
+type WorkspaceProps = {
   planner?: Planner;
   playgroundRunner?: PlaygroundRunner;
   buildRunner?: BuildRunner;
-}) {
+  autoContinue?: boolean;
+};
+
+export function Workspace(props: WorkspaceProps) {
+  const planner = props.planner ?? planFromApi;
+  const playgroundRunner = props.playgroundRunner ?? runPlaygroundFromApi;
+  const buildRunner = props.buildRunner ?? buildFromApi;
+  const autoContinue = props.autoContinue ?? props.planner === undefined;
   const [status, setStatus] = useState<WorkspaceStatus>("draft");
   const [spec, setSpec] = useState<AgentSpec>();
   const [provider, setProvider] = useState<
@@ -43,6 +56,7 @@ export function Workspace({
   const [buildResult, setBuildResult] = useState<BuildResult>();
   const [building, setBuilding] = useState(false);
   const [buildIssue, setBuildIssue] = useState<string>();
+  const [playgroundResult, setPlaygroundResult] = useState<PlaygroundRun>();
 
   async function design(request: { prompt: string; deploymentMode: DeploymentMode }) {
     setStatus("planning");
@@ -52,9 +66,14 @@ export function Workspace({
       if (result.status === "ready") {
         setSpec(result.spec);
         setProvider(result.provider);
-        setStatus(result.spec.decisions.unresolved.length > 0 ? "needs_attention" : "ready");
+        const decision = evaluateSpec(result.spec);
+        setStatus(decision.status);
         setTested(false);
         setBuildResult(undefined);
+        setPlaygroundResult(undefined);
+        if (autoContinue && decision.status === "ready") {
+          await runAutomaticPipeline(result.spec);
+        }
         return;
       }
       setSpec(undefined);
@@ -75,11 +94,44 @@ export function Workspace({
     }
   }
 
+  async function runAutomaticPipeline(plannedSpec: AgentSpec) {
+    setStatus("testing");
+    const playgroundRun = await playgroundRunner({
+      spec: plannedSpec,
+      input: plannedSpec.evaluations[0]?.input ?? {},
+    });
+    setPlaygroundResult(playgroundRun);
+    setTested(true);
+    if (playgroundRun.status !== "completed") {
+      setStatus(playgroundRun.status === "needs_approval" ? "needs_attention" : "failed");
+      setIssue(
+        playgroundRun.trace.at(-1)?.detail ??
+          "The automatic Playground run did not reach a safe completion.",
+      );
+      return;
+    }
+
+    setStatus("building");
+    setBuilding(true);
+    try {
+      const result = await buildRunner({
+        spec: plannedSpec,
+        target: plannedSpec.runtime.target,
+        executionProfile: plannedSpec.runtime.deploymentMode,
+      });
+      setBuildResult(result);
+      setStatus(result.status === "packaged" ? "packaged" : "failed");
+    } finally {
+      setBuilding(false);
+    }
+  }
+
   async function build() {
     if (!spec) {
       return;
     }
     setBuilding(true);
+    setStatus("building");
     setBuildIssue(undefined);
     try {
       const result = await buildRunner({
@@ -88,8 +140,10 @@ export function Workspace({
         executionProfile: spec.runtime.deploymentMode,
       });
       setBuildResult(result);
+      setStatus(result.status === "packaged" ? "packaged" : "failed");
     } catch (error) {
       setBuildIssue(error instanceof Error ? error.message : "HarnessBuilder is unavailable.");
+      setStatus("failed");
     } finally {
       setBuilding(false);
     }
@@ -160,8 +214,12 @@ export function Workspace({
                 </div>
               )}
               <Playground
-                onRunComplete={() => setTested(true)}
+                onRunComplete={(result) => {
+                  setTested(true);
+                  setPlaygroundResult(result);
+                }}
                 runner={playgroundRunner}
+                runResult={playgroundResult}
                 spec={spec}
               />
               <ArtifactDelivery
@@ -197,6 +255,21 @@ async function planFromApi(request: {
     body: JSON.stringify(request),
   });
   const body = (await response.json()) as PlanAgentResult | { issues?: string[] };
+  if (!response.ok) {
+    const errorBody =
+      typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
+    const issues = Array.isArray(errorBody.issues)
+      ? errorBody.issues.filter((issue): issue is string => typeof issue === "string")
+      : [];
+    const reason = typeof errorBody.reason === "string" ? errorBody.reason : undefined;
+    const retryAfter =
+      typeof errorBody.retryAfterSeconds === "number"
+        ? ` Try again in ${errorBody.retryAfterSeconds} seconds.`
+        : "";
+    throw new Error(
+      `${issues.join(" ") || reason || "Agent planning failed safely."}${retryAfter}`,
+    );
+  }
   if (!("status" in body)) {
     throw new Error(body.issues?.join(" ") || "Agent planning failed safely.");
   }
@@ -226,6 +299,9 @@ function statusLabel(status: WorkspaceStatus): string {
     planning: "Planning with Free Auto",
     needs_attention: "Needs attention",
     ready: "Ready to test",
+    testing: "Running spec evaluation",
+    building: "Building with HarnessBuilder",
+    packaged: "Verified package ready",
     failed: "Planning failed",
   };
   return labels[status];

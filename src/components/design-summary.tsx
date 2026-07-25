@@ -32,7 +32,9 @@ export function DesignSummary({ spec }: { spec: AgentSpec }) {
         </article>
         <article>
           <span>Output</span>
-          <strong>{artifact.status === "selected" ? artifact.target : "Choose another target"}</strong>
+          <strong>
+            {artifact.status === "selected" ? artifact.target : "Choose another target"}
+          </strong>
         </article>
         <article>
           <span>Controls</span>

@@ -30,8 +30,10 @@ describe("SpecEditor", () => {
     fireEvent.change(editor, { target: { value: JSON.stringify(edited) } });
     await userEvent.click(screen.getByRole("button", { name: /apply spec/i }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
-      metadata: expect.objectContaining({ name: "Priority support triage" }),
-    }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ name: "Priority support triage" }),
+      }),
+    );
   });
 });

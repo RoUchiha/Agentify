@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { createPlanRoute } from "@/app/api/plan/route";
+import { createPlanRoute } from "@/server/routes/plan";
 import { demoAgentSpec } from "@/domain/demo";
 
 describe("POST /api/plan", () => {

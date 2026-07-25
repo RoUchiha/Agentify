@@ -197,6 +197,8 @@ export const AgentSpecSchema = z
     enforceUniqueIds(spec.workflow.nodes, "workflow node", context);
 
     const toolIds = new Set(spec.tools.map((tool) => tool.id));
+    const agentIds = new Set(spec.agents.map((agent) => agent.id));
+    const knowledgeIds = new Set(spec.knowledge.map((source) => source.id));
     for (const agent of spec.agents) {
       for (const toolId of agent.toolIds) {
         if (!toolIds.has(toolId)) {
@@ -204,6 +206,15 @@ export const AgentSpecSchema = z
             code: "custom",
             path: ["agents"],
             message: `Agent ${agent.id} references undeclared tool ${toolId}.`,
+          });
+        }
+      }
+      for (const handoffId of agent.handoffs) {
+        if (!agentIds.has(handoffId)) {
+          context.addIssue({
+            code: "custom",
+            path: ["agents"],
+            message: `Agent ${agent.id} references undeclared handoff ${handoffId}.`,
           });
         }
       }
@@ -220,6 +231,23 @@ export const AgentSpecSchema = z
     }
 
     const nodeIds = new Set(spec.workflow.nodes.map((node) => node.id));
+    for (const node of spec.workflow.nodes) {
+      const referenceSet =
+        node.type === "agent"
+          ? agentIds
+          : node.type === "tool"
+            ? toolIds
+            : node.type === "knowledge"
+              ? knowledgeIds
+              : undefined;
+      if (referenceSet && (!node.ref || !referenceSet.has(node.ref))) {
+        context.addIssue({
+          code: "custom",
+          path: ["workflow", "nodes"],
+          message: `Workflow ${node.type} node ${node.id} requires a declared reference.`,
+        });
+      }
+    }
     for (const edge of spec.workflow.edges) {
       if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
         context.addIssue({

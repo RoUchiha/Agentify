@@ -28,9 +28,11 @@ describe("provider adapters", () => {
   test("Groq preserves retry-after seconds on rate limiting", async () => {
     const provider = new GroqProvider({
       apiKey: "server-secret",
-      fetcher: vi.fn().mockResolvedValue(
-        new Response("limited", { status: 429, headers: { "retry-after": "7" } }),
-      ),
+      fetcher: vi
+        .fn()
+        .mockResolvedValue(
+          new Response("limited", { status: 429, headers: { "retry-after": "7" } }),
+        ),
     });
 
     await expect(provider.plan({ prompt: "Build a support agent." })).rejects.toMatchObject({
@@ -40,9 +42,9 @@ describe("provider adapters", () => {
   });
 
   test("Ollama requests JSON output through the paired local runner", async () => {
-    const fetcher = vi.fn().mockResolvedValue(
-      Response.json({ response: JSON.stringify(demoAgentSpec) }),
-    );
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(Response.json({ response: JSON.stringify(demoAgentSpec) }));
     const provider = new OllamaProvider({
       baseUrl: "http://127.0.0.1:11434",
       model: "qwen3",

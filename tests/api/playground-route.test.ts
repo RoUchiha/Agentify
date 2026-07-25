@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { createPlaygroundRoute } from "@/app/api/playground/route";
+import { createPlaygroundRoute } from "@/server/routes/playground";
 import { demoAgentSpec } from "@/domain/demo";
 
 describe("POST /api/playground", () => {

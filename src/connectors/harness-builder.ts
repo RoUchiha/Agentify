@@ -30,9 +30,7 @@ const BuildResultSchema = z
     ),
     artifact: z
       .object({
-        files: z.array(
-          z.object({ path: z.string().min(1), content: z.string() }).strict(),
-        ),
+        files: z.array(z.object({ path: z.string().min(1), content: z.string() }).strict()),
         manifest: z
           .object({
             formatVersion: z.literal(1),
@@ -125,21 +123,18 @@ export async function buildAgent(
     headers.authorization = `Bearer ${options.serviceToken}`;
   }
 
-  const response = await fetcher(
-    `${options.baseUrl.replace(/\/+$/, "")}/api/v1/agent-builds`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        contractVersion: "1.0",
-        agentSpec: input.spec,
-        target: input.target,
-        executionProfile: input.executionProfile,
-        idempotencyKey,
-      }),
-      signal: AbortSignal.timeout(120_000),
-    },
-  );
+  const response = await fetcher(`${options.baseUrl.replace(/\/+$/, "")}/api/v1/agent-builds`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      contractVersion: "1.0",
+      agentSpec: input.spec,
+      target: input.target,
+      executionProfile: input.executionProfile,
+      idempotencyKey,
+    }),
+    signal: AbortSignal.timeout(120_000),
+  });
   const body = (await response.json()) as unknown;
   const parsed = BuildResultSchema.safeParse(body);
   if (parsed.success) {

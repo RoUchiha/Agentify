@@ -6,38 +6,38 @@ import { demoAgentSpec } from "@/domain/demo";
 describe("HarnessBuilder connector", () => {
   test("submits the immutable spec with a stable idempotency key", async () => {
     const responseBody = {
-        buildId: "build-42",
-        status: "packaged",
-        events: [
-          { status: "accepted", evidence: "Accepted." },
-          { status: "packaged", evidence: "Packaged." },
-        ],
-        artifact: {
-          files: [{ path: "README.md", content: "# Agent" }],
-          manifest: {
-            formatVersion: 1,
-            specName: "Support triage",
-            runtime: "node-typescript",
-            modules: [],
-            gates: [],
-            files: ["README.md"],
-            immutableSpec: { path: "harness.spec.yaml", checksum: "abc" },
-            agentSpecVersion: "1.0",
-            artifactTarget: "openai-agents-ts",
-            executionProfile: "hybrid",
-          },
-          checksums: { "README.md": "abc" },
-        },
-        report: {
-          status: "passed",
+      buildId: "build-42",
+      status: "packaged",
+      events: [
+        { status: "accepted", evidence: "Accepted." },
+        { status: "packaged", evidence: "Packaged." },
+      ],
+      artifact: {
+        files: [{ path: "README.md", content: "# Agent" }],
+        manifest: {
+          formatVersion: 1,
+          specName: "Support triage",
+          runtime: "node-typescript",
+          modules: [],
           gates: [],
-          generatedAt: "2026-07-24T12:00:00.000Z",
-          delivery: {
-            status: "github-connection-required",
-            message: "Connect GitHub separately.",
-          },
+          files: ["README.md"],
+          immutableSpec: { path: "harness.spec.yaml", checksum: "abc" },
+          agentSpecVersion: "1.0",
+          artifactTarget: "openai-agents-ts",
+          executionProfile: "hybrid",
         },
-      };
+        checksums: { "README.md": "abc" },
+      },
+      report: {
+        status: "passed",
+        gates: [],
+        generatedAt: "2026-07-24T12:00:00.000Z",
+        delivery: {
+          status: "github-connection-required",
+          message: "Connect GitHub separately.",
+        },
+      },
+    };
     const fetcher = vi.fn().mockImplementation(async () => Response.json(responseBody));
 
     const first = await buildAgent(
@@ -71,12 +71,14 @@ describe("HarnessBuilder connector", () => {
   });
 
   test("keeps a configured service credential on the server-side hop", async () => {
-    const fetcher = vi.fn().mockResolvedValue(
-      Response.json(
-        { status: "contract_incompatible", issues: ["Unsupported version."] },
-        { status: 409 },
-      ),
-    );
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          { status: "contract_incompatible", issues: ["Unsupported version."] },
+          { status: 409 },
+        ),
+      );
 
     await expect(
       buildAgent(

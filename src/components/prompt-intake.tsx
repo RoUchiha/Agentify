@@ -36,11 +36,7 @@ export function PromptIntake({
         <span>One outcome is enough. We’ll derive the structure.</span>
         <span>{prompt.trim().length} characters</span>
       </div>
-      <DeploymentPicker
-        disabled={busy}
-        onChange={setDeploymentMode}
-        value={deploymentMode}
-      />
+      <DeploymentPicker disabled={busy} onChange={setDeploymentMode} value={deploymentMode} />
       <button className="primary-action" disabled={busy || prompt.trim().length < 8} type="submit">
         {busy ? "Designing…" : "Design my agent"}
       </button>

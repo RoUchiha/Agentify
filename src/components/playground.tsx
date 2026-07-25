@@ -11,11 +11,13 @@ export type PlaygroundRunner = (request: PlaygroundRequest) => Promise<Playgroun
 
 export function Playground({
   spec,
-  runner = runFromApi,
+  runner = runPlaygroundFromApi,
+  runResult,
   onRunComplete,
 }: {
   spec: AgentSpec;
   runner?: PlaygroundRunner;
+  runResult?: PlaygroundRun;
   onRunComplete?(run: PlaygroundRun): void;
 }) {
   const [input, setInput] = useState(() =>
@@ -25,6 +27,7 @@ export function Playground({
   const [busy, setBusy] = useState(false);
   const [issue, setIssue] = useState<string>();
   const [operatorNotice, setOperatorNotice] = useState<string>();
+  const displayedRun = runResult ?? run;
 
   async function submit() {
     let parsedInput: unknown;
@@ -56,8 +59,8 @@ export function Playground({
           <p className="eyebrow">Provider-backed test</p>
           <h2>Playground</h2>
         </div>
-        <span className={`run-state ${run?.status ?? "draft"}`}>
-          {busy ? "Running" : run ? run.status.replaceAll("_", " ") : "Not run"}
+        <span className={`run-state ${displayedRun?.status ?? "draft"}`}>
+          {busy ? "Running" : displayedRun ? displayedRun.status.replaceAll("_", " ") : "Not run"}
         </span>
       </div>
       <div className="playground-grid">
@@ -78,20 +81,20 @@ export function Playground({
           </button>
         </div>
         <div className="playground-results">
-          {run?.output !== undefined && (
+          {displayedRun?.output !== undefined && (
             <section className="run-output">
               <p className="eyebrow">Structured output</p>
-              <pre>{JSON.stringify(run.output, null, 2)}</pre>
+              <pre>{JSON.stringify(displayedRun.output, null, 2)}</pre>
             </section>
           )}
-          {run?.usage && (
+          {displayedRun?.usage && (
             <p className="usage-line">
-              {run.usage.inputTokens ?? 0} input · {run.usage.outputTokens ?? 0} output ·{" "}
-              {run.latencyMs} ms
+              {displayedRun.usage.inputTokens ?? 0} input · {displayedRun.usage.outputTokens ?? 0}{" "}
+              output · {displayedRun.latencyMs} ms
             </p>
           )}
-          {run && <TraceTimeline trace={run.trace} />}
-          {run?.pendingApproval && (
+          {displayedRun && <TraceTimeline trace={displayedRun.trace} />}
+          {displayedRun?.pendingApproval && (
             <OperatorControls
               onApprove={() =>
                 setOperatorNotice(
@@ -99,7 +102,7 @@ export function Playground({
                 )
               }
               onReject={() => setOperatorNotice("Tool request rejected. No write executed.")}
-              toolId={run.pendingApproval.toolId}
+              toolId={displayedRun.pendingApproval.toolId}
             />
           )}
           {operatorNotice && (
@@ -113,7 +116,7 @@ export function Playground({
   );
 }
 
-async function runFromApi(request: PlaygroundRequest): Promise<PlaygroundRun> {
+export async function runPlaygroundFromApi(request: PlaygroundRequest): Promise<PlaygroundRun> {
   const response = await fetch("/api/playground", {
     method: "POST",
     headers: { "content-type": "application/json" },

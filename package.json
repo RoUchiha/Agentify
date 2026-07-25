@@ -10,10 +10,12 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
+    "test:hardening": "vitest run tests/hardening",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "format:check": "prettier --check package.json tsconfig.json next.config.ts vitest.config.ts eslint.config.mjs src tests"
+    "format:check": "prettier --check package.json tsconfig.json next.config.ts vitest.config.ts playwright.config.ts eslint.config.mjs src tests e2e .github README.md SECURITY.md TRUST_BOUNDARIES.md"
   },
   "dependencies": {
     "next": "15.5.21",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
+    "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -39,6 +42,7 @@
     "vitest": "^4.0.16"
   },
   "overrides": {
-    "postcss": "8.5.20"
+    "postcss": "8.5.20",
+    "sharp": "0.35.3"
   }
 }

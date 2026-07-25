@@ -6,6 +6,20 @@ export type ZipArtifact = {
 export function createZip(artifact: ZipArtifact): Uint8Array {
   const paths = artifact.files.map((file) => file.path);
   if (
+    new Set(paths).size !== paths.length ||
+    paths.some(
+      (path) =>
+        path.length === 0 ||
+        path.includes("\\") ||
+        path.includes("\0") ||
+        path.startsWith("/") ||
+        /^[a-z]:/i.test(path) ||
+        path.split("/").some((segment) => segment === "" || segment === "." || segment === ".."),
+    )
+  ) {
+    throw new Error("Artifact contains an unsafe or duplicate ZIP path.");
+  }
+  if (
     paths.length !== artifact.manifest.files.length ||
     paths.some((path, index) => path !== artifact.manifest.files[index])
   ) {

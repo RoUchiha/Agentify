@@ -1,42 +1,8 @@
-import { AgentSpecSchema } from "@/domain/agent-spec";
 import { resolveFreeAuto } from "@/providers/free-auto";
 import { GroqProvider } from "@/providers/groq";
 import { OllamaProvider } from "@/providers/ollama";
-import {
-  executePlayground,
-  type PlaygroundRequest,
-  type PlaygroundRun,
-} from "@/server/playground";
-
-type RouteDependencies = {
-  run(request: PlaygroundRequest): Promise<PlaygroundRun>;
-};
-
-export function createPlaygroundRoute(dependencies: RouteDependencies) {
-  return async function post(request: Request): Promise<Response> {
-    let input: unknown;
-    try {
-      input = await request.json();
-    } catch {
-      return Response.json({ issues: ["Request body must be valid JSON."] }, { status: 400 });
-    }
-
-    if (typeof input !== "object" || input === null || Array.isArray(input)) {
-      return Response.json({ issues: ["Request body must be an object."] }, { status: 400 });
-    }
-    const value = input as Record<string, unknown>;
-    const parsedSpec = AgentSpecSchema.safeParse(value.spec);
-    if (!parsedSpec.success) {
-      return Response.json(
-        { issues: parsedSpec.error.issues.map((issue) => issue.message) },
-        { status: 400 },
-      );
-    }
-
-    const result = await dependencies.run({ spec: parsedSpec.data, input: value.input });
-    return Response.json(result, { status: 200 });
-  };
-}
+import { executePlayground } from "@/server/playground";
+import { createPlaygroundRoute } from "@/server/routes/playground";
 
 export const POST = createPlaygroundRoute({
   run: async (request) => {

@@ -42,7 +42,11 @@ describe("planAgent", () => {
           groq: { provider: "groq", available: true, dataBoundary: "cloud" },
         },
         providers: {
-          groq: { id: "groq", plan: vi.fn().mockResolvedValue({ name: "incomplete" }), run: vi.fn() },
+          groq: {
+            id: "groq",
+            plan: vi.fn().mockResolvedValue({ name: "incomplete" }),
+            run: vi.fn(),
+          },
         },
       },
     );

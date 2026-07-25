@@ -12,7 +12,11 @@ export function VisualCanvas({ graph }: { graph: VisualGraph }) {
       </div>
       <ol className="node-lane">
         {graph.nodes.map((node, index) => (
-          <li aria-label={`${node.kind}: ${node.label}`} className={`canvas-node ${node.kind}`} key={node.id}>
+          <li
+            aria-label={`${node.kind}: ${node.label}`}
+            className={`canvas-node ${node.kind}`}
+            key={node.id}
+          >
             <span className="node-index">{String(index + 1).padStart(2, "0")}</span>
             <div>
               <small>{node.kind}</small>
