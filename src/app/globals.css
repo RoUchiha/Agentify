@@ -689,6 +689,129 @@ h3 {
   font-size: 0.68rem;
 }
 
+.advanced-studio-shell {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.advisor-rail {
+  display: grid;
+  min-width: 0;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid #304a3f;
+  border-radius: 0.9rem;
+  background: #0a1712;
+}
+
+.advisor-rail header p,
+.advisor-clear p {
+  color: #96a9a0;
+}
+
+.advisor-group {
+  display: grid;
+  min-width: 0;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.8rem;
+  border: 1px solid #304a3f;
+  border-radius: 0.75rem;
+}
+
+.advisor-group > legend {
+  padding: 0 0.35rem;
+  color: #dceae3;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.advisor-group > legend span {
+  color: #75efb5;
+}
+
+.advisor-group.blocking {
+  border-color: #70433d;
+}
+
+.advisor-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border-radius: 0.65rem;
+  background: #08120f;
+}
+
+.advisor-card-heading > span {
+  color: #75efb5;
+  font-size: 0.63rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.advisor-card h3,
+.advisor-card p {
+  margin: 0;
+}
+
+.advisor-card details,
+.advisor-card li {
+  color: #aebfb7;
+  font-size: 0.73rem;
+}
+
+.advisor-impacts,
+.advisor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.advisor-impacts span {
+  padding: 0.25rem 0.45rem;
+  border: 1px solid #2d463b;
+  border-radius: 999px;
+  color: #9fb2a9;
+  font-size: 0.64rem;
+}
+
+.advisor-actions button {
+  border: 1px solid #405d50;
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  color: #d3e0da;
+  background: #10241c;
+  font-size: 0.68rem;
+}
+
+.advisor-preview {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem;
+  border: 1px solid #3d594d;
+  border-radius: 0.55rem;
+  background: #07110e;
+}
+
+.advisor-preview > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.advisor-preview code {
+  color: #75efb5;
+  font-size: 0.68rem;
+}
+
+.advisor-preview span {
+  overflow-wrap: anywhere;
+  color: #c5d3cc;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.68rem;
+}
+
 .config-control {
   display: grid;
   min-width: 0;

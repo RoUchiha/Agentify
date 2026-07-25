@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ConfigField } from "@/components/config-field";
+import { AdvisorRail } from "@/components/advisor-rail";
 import { SpecEditor } from "@/components/spec-editor";
 import {
   fieldLabel,
@@ -10,14 +11,19 @@ import {
   type StudioSection,
 } from "@/components/studio-sections";
 import type { AgentSpec } from "@/domain/agent-spec";
+import type { AdvisoryFinding } from "@/domain/advisor";
 import { applySpecPatches, getSpecValue } from "@/domain/spec-path";
 
 export function AdvancedStudio({
   spec,
+  findings = [],
   onChange,
+  onDismissFinding = () => undefined,
 }: {
   spec: AgentSpec;
+  findings?: AdvisoryFinding[];
   onChange(spec: AgentSpec): void;
+  onDismissFinding?(id: string): void;
 }) {
   const [activeId, setActiveId] = useState(STUDIO_SECTIONS[0]!.id);
   const active = STUDIO_SECTIONS.find((section) => section.id === activeId)!;
@@ -47,8 +53,27 @@ export function AdvancedStudio({
     onChange(result.data);
   }
 
+  function editPaths(paths: string[]) {
+    const nextSection = STUDIO_SECTIONS.find(
+      (section) =>
+        !section.raw &&
+        section.roots.some((root) =>
+          paths.some((path) => path === root || path.startsWith(`${root}.`)),
+        ),
+    );
+    if (nextSection) setActiveId(nextSection.id);
+  }
+
   return (
-    <section aria-label="Advanced Build studio" className="advanced-studio">
+    <section aria-label="Advanced Build studio" className="advanced-studio-shell">
+      <AdvisorRail
+        findings={findings}
+        onChange={onChange}
+        onDismiss={onDismissFinding}
+        onEditPaths={editPaths}
+        spec={spec}
+      />
+      <div className="advanced-studio">
       <nav aria-label="Advanced configuration sections" className="studio-navigation">
         {STUDIO_SECTIONS.map((section) => (
           <button
@@ -108,6 +133,7 @@ export function AdvancedStudio({
             ))}
           </div>
         )}
+      </div>
       </div>
     </section>
   );

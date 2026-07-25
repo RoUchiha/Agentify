@@ -18,6 +18,7 @@ import { VisualCanvas } from "@/components/visual-canvas";
 import type { AgentSpec, DeploymentMode } from "@/domain/agent-spec";
 import type { BuildAgentInput, BuildResult } from "@/connectors/harness-builder";
 import { materializeCustomization } from "@/domain/customization";
+import { adviseSpec } from "@/domain/advisor";
 import { toVisualGraph } from "@/domain/graph";
 import { evaluateSpec } from "@/domain/policy";
 import { analyzeRequirements } from "@/domain/requirements-coverage";
@@ -59,12 +60,16 @@ export function Workspace(props: WorkspaceProps) {
   >();
   const [issue, setIssue] = useState<string>();
   const [mode, setMode] = useState<BuildMode>("quick");
+  const [dismissedFindingIds, setDismissedFindingIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [tested, setTested] = useState(false);
   const [buildResult, setBuildResult] = useState<BuildResult>();
   const [building, setBuilding] = useState(false);
   const [buildIssue, setBuildIssue] = useState<string>();
   const [playgroundResult, setPlaygroundResult] = useState<PlaygroundRun>();
   const coverage = spec ? analyzeRequirements(spec) : undefined;
+  const findings = spec ? adviseSpec(spec, dismissedFindingIds) : [];
   const blockingGapCount =
     coverage?.gaps.filter((gap) => gap.severity === "blocking").length ?? 0;
   const blockedReason =
@@ -79,6 +84,7 @@ export function Workspace(props: WorkspaceProps) {
       const result = await planner(request);
       if (result.status === "ready") {
         const acceptedSpec = materializeCustomization(result.spec);
+        setDismissedFindingIds(new Set());
         setSpec(acceptedSpec);
         setProvider(result.provider);
         const decision = evaluateSpec(acceptedSpec);
@@ -243,7 +249,11 @@ export function Workspace(props: WorkspaceProps) {
                 <div className="advanced-grid">
                   <VisualCanvas graph={toVisualGraph(spec)} />
                   <AdvancedStudio
+                    findings={findings}
                     onChange={(nextSpec) => acceptSpec(nextSpec)}
+                    onDismissFinding={(id) =>
+                      setDismissedFindingIds((current) => new Set(current).add(id))
+                    }
                     spec={spec}
                   />
                 </div>
