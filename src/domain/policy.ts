@@ -1,4 +1,5 @@
 import type { AgentSpec } from "@/domain/agent-spec";
+import { analyzeRequirements } from "@/domain/requirements-coverage";
 
 export type SpecIssue = {
   code:
@@ -7,6 +8,7 @@ export type SpecIssue = {
     | "restricted_cloud_confirmation_required";
   message: string;
   toolId?: string;
+  path?: string;
 };
 
 export type RuntimeApproval = {
@@ -21,10 +23,13 @@ export type SpecDecision = {
 };
 
 export function evaluateSpec(spec: AgentSpec): SpecDecision {
-  const issues: SpecIssue[] = spec.decisions.unresolved.map((decision) => ({
-    code: "unresolved_decision",
-    message: decision,
-  }));
+  const issues: SpecIssue[] = analyzeRequirements(spec).gaps
+    .filter((gap) => gap.path.startsWith("decisions.unresolved."))
+    .map((gap) => ({
+      code: "unresolved_decision",
+      message: gap.question,
+      path: gap.path,
+    }));
   const approvals: RuntimeApproval[] = [];
 
   for (const tool of spec.tools) {
