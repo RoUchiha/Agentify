@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CustomizationSchema } from "@/domain/customization";
+
 export const ARTIFACT_TARGETS = [
   "openai-agents-ts",
   "openai-agents-python",
@@ -19,7 +21,7 @@ const JsonSchema = z.record(z.string(), z.unknown());
 
 const MetadataSchema = z
   .object({
-    version: z.literal("1.0"),
+    version: z.enum(["1.0", "1.1"]),
     id: Identifier,
     name: z.string().trim().min(1).max(120),
     description: z.string().trim().min(1).max(500),
@@ -189,6 +191,7 @@ export const AgentSpecSchema = z
     runtime: RuntimeSchema,
     evaluations: z.array(EvaluationSchema).min(1).max(100),
     decisions: DecisionSchema,
+    customization: CustomizationSchema.optional(),
   })
   .strict()
   .superRefine((spec, context) => {
@@ -199,6 +202,7 @@ export const AgentSpecSchema = z
     const toolIds = new Set(spec.tools.map((tool) => tool.id));
     const agentIds = new Set(spec.agents.map((agent) => agent.id));
     const knowledgeIds = new Set(spec.knowledge.map((source) => source.id));
+    const stateKeys = new Set(spec.state.map((entry) => entry.key));
     for (const agent of spec.agents) {
       for (const toolId of agent.toolIds) {
         if (!toolIds.has(toolId)) {
@@ -281,6 +285,144 @@ export const AgentSpecSchema = z
         message: "Workflow and budget step limits must match.",
       });
     }
+
+    if (spec.metadata.version === "1.0" && spec.customization) {
+      context.addIssue({
+        code: "custom",
+        path: ["metadata", "version"],
+        message: "Customization requires AgentSpec version 1.1.",
+      });
+    }
+
+    const customization = spec.customization;
+    if (!customization) return;
+
+    const profileIds = uniqueReferenceIds(
+      customization.modelProfiles,
+      "model profile",
+      ["customization", "modelProfiles"],
+      context,
+    );
+    uniqueReferenceIds(
+      customization.guardrails,
+      "guardrail",
+      ["customization", "guardrails"],
+      context,
+    );
+    uniqueReferenceIds(customization.hooks, "hook", ["customization", "hooks"], context);
+    uniqueReferenceIds(
+      customization.workflow.checkpoints,
+      "checkpoint",
+      ["customization", "workflow", "checkpoints"],
+      context,
+    );
+
+    for (const profile of customization.modelProfiles) {
+      for (const fallbackId of profile.fallbackProfileIds) {
+        enforceReference(
+          profileIds,
+          fallbackId,
+          ["customization", "modelProfiles"],
+          `Model profile ${profile.id} references undeclared fallback ${fallbackId}.`,
+          context,
+        );
+      }
+    }
+    for (const [agentId, profileId] of Object.entries(customization.agentModelProfiles)) {
+      enforceReference(
+        agentIds,
+        agentId,
+        ["customization", "agentModelProfiles"],
+        `Model profile mapping references undeclared agent ${agentId}.`,
+        context,
+      );
+      enforceReference(
+        profileIds,
+        profileId,
+        ["customization", "agentModelProfiles"],
+        `Agent ${agentId} references undeclared model profile ${profileId}.`,
+        context,
+      );
+    }
+    for (const policy of customization.toolPolicies) {
+      enforceReference(
+        toolIds,
+        policy.toolId,
+        ["customization", "toolPolicies"],
+        `Tool policy references undeclared tool ${policy.toolId}.`,
+        context,
+      );
+    }
+    for (const policy of customization.knowledgePolicies) {
+      enforceReference(
+        knowledgeIds,
+        policy.knowledgeId,
+        ["customization", "knowledgePolicies"],
+        `Knowledge policy references undeclared source ${policy.knowledgeId}.`,
+        context,
+      );
+    }
+    for (const policy of customization.statePolicies) {
+      enforceReference(
+        stateKeys,
+        policy.stateKey,
+        ["customization", "statePolicies"],
+        `State policy references undeclared state ${policy.stateKey}.`,
+        context,
+      );
+      for (const agentId of policy.mutableBy) {
+        enforceReference(
+          agentIds,
+          agentId,
+          ["customization", "statePolicies"],
+          `State policy ${policy.stateKey} references undeclared agent ${agentId}.`,
+          context,
+        );
+      }
+    }
+    for (const policy of customization.workflow.nodePolicies) {
+      enforceReference(
+        nodeIds,
+        policy.nodeId,
+        ["customization", "workflow", "nodePolicies"],
+        `Node policy references undeclared node ${policy.nodeId}.`,
+        context,
+      );
+      if (policy.failureTarget) {
+        enforceReference(
+          nodeIds,
+          policy.failureTarget,
+          ["customization", "workflow", "nodePolicies"],
+          `Node policy ${policy.nodeId} references undeclared failure target ${policy.failureTarget}.`,
+          context,
+        );
+      }
+    }
+    for (const policy of customization.workflow.edgePolicies) {
+      enforceReference(
+        nodeIds,
+        policy.source,
+        ["customization", "workflow", "edgePolicies"],
+        `Edge policy references undeclared source ${policy.source}.`,
+        context,
+      );
+      enforceReference(
+        nodeIds,
+        policy.target,
+        ["customization", "workflow", "edgePolicies"],
+        `Edge policy references undeclared target ${policy.target}.`,
+        context,
+      );
+    }
+    for (const checkpoint of customization.workflow.checkpoints) {
+      enforceReference(
+        nodeIds,
+        checkpoint.afterNodeId,
+        ["customization", "workflow", "checkpoints"],
+        `Checkpoint ${checkpoint.id} references undeclared node ${checkpoint.afterNodeId}.`,
+        context,
+      );
+    }
   });
 
 export type AgentSpec = z.infer<typeof AgentSpecSchema>;
@@ -303,5 +445,37 @@ function enforceUniqueIds(
       });
     }
     seen.add(value.id);
+  }
+}
+
+function uniqueReferenceIds(
+  values: ReadonlyArray<{ id: string }>,
+  label: string,
+  path: PropertyKey[],
+  context: z.RefinementCtx,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const value of values) {
+    if (ids.has(value.id)) {
+      context.addIssue({
+        code: "custom",
+        path,
+        message: `Duplicate ${label} identifier ${value.id}.`,
+      });
+    }
+    ids.add(value.id);
+  }
+  return ids;
+}
+
+function enforceReference(
+  declared: ReadonlySet<string>,
+  reference: string,
+  path: PropertyKey[],
+  message: string,
+  context: z.RefinementCtx,
+): void {
+  if (!declared.has(reference)) {
+    context.addIssue({ code: "custom", path, message });
   }
 }
