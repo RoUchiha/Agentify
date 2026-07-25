@@ -70,7 +70,7 @@ describe("planAgent", () => {
     });
   });
 
-  test("returns invalid_spec when provider output violates the contract", async () => {
+  test("returns a deterministic no-tool baseline when provider output violates the contract", async () => {
     const result = await planAgent(
       { prompt: "Build a useful support agent.", deploymentMode: "hybrid" },
       {
@@ -88,10 +88,20 @@ describe("planAgent", () => {
       },
     );
 
-    expect(result).toMatchObject({ status: "invalid_spec", provider: "groq" });
-    if (result.status === "invalid_spec") {
-      expect(result.issues.length).toBeGreaterThan(0);
-    }
+    expect(result).toMatchObject({
+      status: "ready",
+      provider: { id: "groq", dataBoundary: "cloud" },
+      spec: {
+        objective: { goal: "Build a useful support agent." },
+        tools: [],
+        runtime: { deploymentMode: "hybrid" },
+        decisions: {
+          warnings: [
+            "The provider proposal was invalid, so Agentify emitted a safe no-tool baseline for review.",
+          ],
+        },
+      },
+    });
   });
 
   test("does not call a provider when Free Auto needs a connection", async () => {
