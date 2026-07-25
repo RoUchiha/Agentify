@@ -4,7 +4,7 @@ Agentify turns one natural-language brief into a validated, testable agent desig
 
 It is a separate application from [HarnessBuilder](https://github.com/RoUchiha/HarnessBuilder), connected through the versioned `AgentSpec v1` contract. A complete low-risk request continues automatically through design, a real configured-provider Playground run, HarnessBuilder generation, static verification, and ZIP delivery. Ambiguity, unavailable providers, write approvals, and failed gates stop visibly.
 
-> Live demo: added during the hosted release after the Groq secret is configured.
+> **Live demo:** [agentify-wine.vercel.app](https://agentify-wine.vercel.app)
 
 ## What it builds
 
