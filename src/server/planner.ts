@@ -1,5 +1,6 @@
 import type { DeploymentMode } from "@/domain/agent-spec";
 import { AgentSpecSchema } from "@/domain/agent-spec";
+import { normalizePlannerPayload } from "@/domain/normalize";
 import { resolveFreeAuto, type FreeAutoInput } from "@/providers/free-auto";
 import type { PlannerProvider } from "@/providers/types";
 
@@ -46,7 +47,7 @@ export async function planAgent(
   }
 
   const proposed = await provider.plan(request);
-  const parsed = AgentSpecSchema.safeParse(proposed);
+  const parsed = normalizePlannerPayload(proposed);
   if (!parsed.success) {
     return {
       status: "invalid_spec",
